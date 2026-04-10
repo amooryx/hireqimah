@@ -136,7 +136,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "vision.title": { en: "Supporting Saudi Vision 2030", ar: "ندعم رؤية السعودية 2030" },
   "vision.desc": {
     en: "HireQimah connects education outcomes with labor market needs — helping students, employers, and universities work toward a stronger workforce.",
-    ar: "هايركيمة تربط مخرجات التعليم بمتطلبات سوق العمل — لمساعدة الطلاب وأصحاب العمل والجامعات في بناء قوى عاملة أقوى.",
+    ar: "HireQimah تربط مخرجات التعليم بمتطلبات سوق العمل — لمساعدة الطلاب وأصحاب العمل والجامعات في بناء قوى عاملة أقوى.",
   },
 
   // Final CTA
@@ -184,15 +184,15 @@ const translations: Record<string, Record<Lang, string>> = {
   "role.adminAccess": { en: "Administrator Access", ar: "دخول المسؤول" },
 
   // About page
-  "about.title": { en: "About HireQimah", ar: "عن هايركيمة" },
+  "about.title": { en: "About HireQimah", ar: "عن HireQimah" },
   "about.desc": {
     en: "HireQimah is a career readiness platform that connects Saudi graduates with employers by measuring real employability — not just grades.",
-    ar: "هايركيمة منصة جاهزية مهنية تربط الخريجين السعوديين بأصحاب العمل من خلال قياس الجاهزية الفعلية — مو بس الدرجات.",
+    ar: "HireQimah منصة جاهزية مهنية تربط الخريجين السعوديين بأصحاب العمل من خلال قياس الجاهزية الفعلية — مو بس الدرجات.",
   },
   "about.mission": { en: "Our Mission", ar: "مهمتنا" },
   "about.mission.desc": {
     en: "We believe that grades alone don't predict job readiness. HireQimah's Employment Readiness Score combines verified academic records, industry certifications, real projects, and market-driven skill analysis to give every stakeholder a transparent, trustworthy signal of graduate employability.",
-    ar: "نؤمن إن الدرجات وحدها ما تقيس الجاهزية المهنية. درجة الجاهزية في هايركيمة تجمع بين السجلات الأكاديمية الموثّقة، والشهادات المهنية، والمشاريع الحقيقية، وتحليل المهارات المطلوبة في السوق — عشان نعطي الجميع مقياس شفاف وموثوق.",
+    ar: "نؤمن إن الدرجات وحدها ما تقيس الجاهزية المهنية. درجة الجاهزية في HireQimah تجمع بين السجلات الأكاديمية الموثّقة، والشهادات المهنية، والمشاريع الحقيقية، وتحليل المهارات المطلوبة في السوق — عشان نعطي الجميع مقياس شفاف وموثوق.",
   },
   "about.values": { en: "What We Stand For", ar: "قيمنا" },
   "about.transparency": { en: "Transparency", ar: "الشفافية" },
@@ -213,7 +213,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "about.vision2030": { en: "Aligned with Saudi Vision 2030", ar: "متوافقون مع رؤية السعودية 2030" },
   "about.vision2030.desc": {
     en: "HireQimah directly supports the Kingdom's goals of increasing youth employment, improving education-to-employment pathways, and building a knowledge-based economy.",
-    ar: "هايركيمة تدعم أهداف المملكة في زيادة توظيف الشباب، وتحسين الربط بين التعليم وسوق العمل، وبناء اقتصاد معرفي.",
+    ar: "HireQimah تدعم أهداف المملكة في زيادة توظيف الشباب، وتحسين الربط بين التعليم وسوق العمل، وبناء اقتصاد معرفي.",
   },
   "about.cta": { en: "Ready to experience it?", ar: "مستعد تجرّب؟" },
 
@@ -249,7 +249,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "privacy.s1.title": { en: "1. Data We Collect", ar: "١. البيانات التي نجمعها" },
   "privacy.s1.intro": {
     en: "HireQimah collects the following data to provide career readiness scoring and opportunity matching:",
-    ar: "تجمع هايركيمة البيانات التالية لتقديم تقييم الجاهزية المهنية ومطابقة الفرص:",
+    ar: "تجمع HireQimah البيانات التالية لتقديم تقييم الجاهزية المهنية ومطابقة الفرص:",
   },
   "privacy.s1.i1": { en: "Academic Records: University transcripts, GPA, major, and degree information.", ar: "السجلات الأكاديمية: كشوف الدرجات، المعدل التراكمي، التخصص، ومعلومات الدرجة العلمية." },
   "privacy.s1.i2": { en: "Conduct & Attendance: Disciplinary records and academic warnings provided by partner universities.", ar: "السلوك والحضور: السجلات التأديبية والإنذارات الأكاديمية من الجامعات الشريكة." },
@@ -313,7 +313,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "terms.s5.title": { en: "5. Platform Governance", ar: "٥. حوكمة المنصة" },
   "terms.s5.desc": {
     en: "HireQimah reserves the right to modify scoring weights and platform features to maintain fairness and alignment with Saudi market needs and Vision 2030 objectives.",
-    ar: "تحتفظ هايركيمة بالحق في تعديل أوزان التقييم وميزات المنصة للحفاظ على العدالة والتوافق مع متطلبات السوق السعودي وأهداف رؤية 2030.",
+    ar: "تحتفظ HireQimah بالحق في تعديل أوزان التقييم وميزات المنصة للحفاظ على العدالة والتوافق مع متطلبات السوق السعودي وأهداف رؤية 2030.",
   },
   "terms.s6.title": { en: "6. Contact", ar: "٦. التواصل" },
   "terms.s6.desc": {
@@ -328,10 +328,10 @@ const translations: Record<string, Record<Lang, string>> = {
     ar: "الفريق الذي يبني منصة الجاهزية المهنية في المملكة.",
   },
   "founders.teamName": { en: "Founding Team", ar: "الفريق المؤسس" },
-  "founders.teamRole": { en: "HireQimah Leadership", ar: "قيادة هايركيمة" },
+  "founders.teamRole": { en: "HireQimah Leadership", ar: "قيادة HireQimah" },
   "founders.teamBio": {
     en: "HireQimah was founded by a team of Saudi technologists and workforce development experts who saw a critical gap between what universities measure and what employers actually need.",
-    ar: "تأسست هايركيمة على يد فريق من التقنيين السعوديين وخبراء تطوير القوى العاملة الذين لاحظوا فجوة كبيرة بين ما تقيسه الجامعات وما يحتاجه أصحاب العمل فعلاً.",
+    ar: "تأسست HireQimah على يد فريق من التقنيين السعوديين وخبراء تطوير القوى العاملة الذين لاحظوا فجوة كبيرة بين ما تقيسه الجامعات وما يحتاجه أصحاب العمل فعلاً.",
   },
   "founders.joinMission": { en: "Join Our Mission", ar: "انضم لمهمتنا" },
   "founders.joinDesc": {
@@ -343,7 +343,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "security.title": { en: "Security Statement", ar: "بيان الأمان" },
   "security.desc": {
     en: "HireQimah is built with enterprise-grade security to protect student data, employer workflows, and institutional records.",
-    ar: "هايركيمة مبنية بمعايير أمان مؤسسية لحماية بيانات الطلاب وعمليات التوظيف وسجلات المؤسسات.",
+    ar: "HireQimah مبنية بمعايير أمان مؤسسية لحماية بيانات الطلاب وعمليات التوظيف وسجلات المؤسسات.",
   },
   "security.auth": { en: "Authentication & Access Control", ar: "المصادقة والتحكم بالوصول" },
   "security.auth.i1": { en: "JWT-based authentication with inactivity timeout", ar: "مصادقة JWT مع انتهاء الجلسة عند عدم النشاط" },

@@ -34,12 +34,16 @@ const Index = () => {
           <div className="max-w-2xl">
             <motion.img src={logo} alt="HireQimah" className="h-14 md:h-16 mb-6 drop-shadow-lg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} />
 
-            <motion.h1
-              className="text-3xl md:text-5xl lg:text-[3.5rem] font-bold font-heading text-white mb-5 leading-tight whitespace-pre-line"
+            <motion.div
+              className="mb-5"
               initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.6 }}
             >
-              {t("hero.headline")}
-            </motion.h1>
+              {t("hero.headline").split("\n").map((line, i) => (
+                <h1 key={i} className={`text-3xl md:text-5xl lg:text-[3.5rem] font-bold font-heading text-white leading-tight ${i > 0 ? "mt-3" : ""}`}>
+                  {line}
+                </h1>
+              ))}
+            </motion.div>
 
             <motion.p
               className="text-base md:text-lg text-white/90 mb-8 leading-relaxed max-w-xl"
