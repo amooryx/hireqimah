@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AuthUser } from "@/lib/supabaseAuth";
 import {
   ShieldCheck, Users, FileCheck, Settings, CheckCircle, XCircle, Clock,
-  Award, BarChart3, Activity, TrendingUp, Globe, Calendar, AlertTriangle
+  Award, BarChart3, Activity, TrendingUp, Globe, Calendar, AlertTriangle, Briefcase
 } from "lucide-react";
 import MarketIntelligenceDashboard from "@/components/MarketIntelligenceDashboard";
 import { useToast } from "@/hooks/use-toast";

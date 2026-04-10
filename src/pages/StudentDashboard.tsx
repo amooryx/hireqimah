@@ -51,7 +51,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
       untypedTable("notifications").select("*").eq("user_id", authUser.id).order("created_at", { ascending: false }).limit(20),
     ]);
     setDashData(data);
-    setOnboardingComplete(data.studentProfile?.onboarding_completed || false);
+    setOnboardingComplete(data.studentProfile ? true : false);
     setInterviews(interviewData || []);
     setNotifications(notifData || []);
     setUnreadCount((notifData || []).filter((n: any) => !n.read).length);
