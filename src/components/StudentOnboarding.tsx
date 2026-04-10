@@ -16,8 +16,59 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
-interface University { id: string; name: string; }
-interface Major { id: string; name: string; sector: string; skill_domain: string; }
+const SAUDI_UNIVERSITIES = [
+  "King Saud University", "King Abdulaziz University", "KFUPM",
+  "Princess Nourah University", "Imam Mohammad Ibn Saud University",
+  "King Fahd University of Petroleum & Minerals", "Umm Al-Qura University",
+  "King Khalid University", "Taibah University", "Qassim University",
+  "Jazan University", "Tabuk University", "Hail University",
+  "Najran University", "Northern Borders University", "Shaqra University",
+  "Majmaah University", "Prince Sattam bin Abdulaziz University",
+  "Jeddah University", "Bisha University", "Hafr Al Batin University",
+  "Prince Mohammad bin Fahd University", "Alfaisal University",
+  "Effat University", "Dar Al Hekma University", "Arab Open University",
+].sort();
+
+const MAJORS = [
+  { name: "Computer Science", sector: "IT" },
+  { name: "Cybersecurity", sector: "IT" },
+  { name: "Software Engineering", sector: "IT" },
+  { name: "Data Science", sector: "IT" },
+  { name: "Artificial Intelligence", sector: "IT" },
+  { name: "Information Systems", sector: "IT" },
+  { name: "Mechanical Engineering", sector: "Engineering" },
+  { name: "Electrical Engineering", sector: "Engineering" },
+  { name: "Civil Engineering", sector: "Engineering" },
+  { name: "Chemical Engineering", sector: "Engineering" },
+  { name: "Industrial Engineering", sector: "Engineering" },
+  { name: "Petroleum Engineering", sector: "Engineering" },
+  { name: "Architecture", sector: "Engineering" },
+  { name: "Medicine", sector: "Medical" },
+  { name: "Pharmacy", sector: "Medical" },
+  { name: "Dentistry", sector: "Medical" },
+  { name: "Nursing", sector: "Healthcare" },
+  { name: "Public Health", sector: "Healthcare" },
+  { name: "Business Administration", sector: "Business" },
+  { name: "Finance", sector: "Business" },
+  { name: "Marketing", sector: "Business" },
+  { name: "Accounting", sector: "Business" },
+  { name: "Human Resources", sector: "Business" },
+  { name: "Supply Chain Management", sector: "Business" },
+  { name: "Law", sector: "Law" },
+  { name: "Islamic Studies", sector: "Humanities" },
+  { name: "Arabic Language", sector: "Humanities" },
+  { name: "English Language", sector: "Humanities" },
+  { name: "Psychology", sector: "Humanities" },
+  { name: "Mass Communication", sector: "Humanities" },
+  { name: "Graphic Design", sector: "Arts" },
+  { name: "Interior Design", sector: "Arts" },
+  { name: "Mathematics", sector: "Science" },
+  { name: "Physics", sector: "Science" },
+  { name: "Chemistry", sector: "Science" },
+  { name: "Biology", sector: "Science" },
+  { name: "Education", sector: "Education" },
+  { name: "Special Education", sector: "Education" },
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const STEPS = [
   { title: "Academic Info", icon: GraduationCap, desc: "University, major & GPA" },
@@ -30,11 +81,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Data
-  const [universities, setUniversities] = useState<University[]>([]);
-  const [majors, setMajors] = useState<Major[]>([]);
-  const [allMajors, setAllMajors] = useState<Major[]>([]);
 
   // Form
   const [selectedUni, setSelectedUni] = useState("");
@@ -54,31 +100,26 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
   }, []);
 
   const loadData = async () => {
-    const [uniRes, majorRes, profileRes] = await Promise.all([
-      supabase.from("universities").select("id, name").order("name"),
-      supabase.from("majors_repository").select("id, name, sector, skill_domain").order("name"),
-      supabase.from("student_profiles").select("university, major, gpa, gpa_scale, career_target, onboarding_progress").eq("user_id", userId).single(),
-    ]);
+    const { data: profileData } = await supabase
+      .from("student_profiles")
+      .select("university, major, gpa, gpa_scale, target_role")
+      .eq("user_id", userId)
+      .single();
 
-    if (uniRes.data) setUniversities(uniRes.data);
-    if (majorRes.data) { setAllMajors(majorRes.data); setMajors(majorRes.data); }
-
-    if (profileRes.data) {
-      setSelectedUni(profileRes.data.university || "");
-      setSelectedMajor(profileRes.data.major || "");
-      setGpa(profileRes.data.gpa?.toString() || "");
-      setGpaScale((profileRes.data.gpa_scale as "4" | "5") || "4");
-      setCareerTarget(profileRes.data.career_target || "");
+    if (profileData) {
+      setSelectedUni(profileData.university || "");
+      setSelectedMajor(profileData.major || "");
+      setGpa(profileData.gpa?.toString() || "");
+      setGpaScale((profileData.gpa_scale as "4" | "5") || "4");
+      setCareerTarget(profileData.target_role || "");
     }
 
-    // Load existing skills
     const { data: skillData } = await supabase
       .from("skill_matrix")
       .select("skill_name")
       .eq("user_id", userId);
     if (skillData) setSkills(skillData.map(s => s.skill_name));
 
-    // Load existing projects
     const { data: projData } = await supabase
       .from("student_projects")
       .select("title, description")
@@ -87,12 +128,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
 
     setLoading(false);
   };
-
-  // Filter majors when university changes
-  useEffect(() => {
-    // For now show all majors since they aren't university-specific in seed
-    setMajors(allMajors);
-  }, [selectedUni, allMajors]);
 
   const progress = (() => {
     let p = 0;
@@ -135,18 +170,14 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
     setSaving(true);
 
     try {
-      // Update student profile
       await supabase.from("student_profiles").update({
         university: selectedUni,
         major: selectedMajor,
         gpa: parseFloat(gpa) || 0,
         gpa_scale: gpaScale,
-        career_target: careerTarget,
-        onboarding_completed: true,
-        onboarding_progress: progress,
+        target_role: careerTarget,
       }).eq("user_id", userId);
 
-      // Upsert skills
       for (const skillName of skills) {
         await supabase.from("skill_matrix").upsert({
           user_id: userId,
@@ -155,7 +186,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
         }, { onConflict: "user_id,skill_name" });
       }
 
-      // Insert new projects
       const { data: existingProjects } = await supabase
         .from("student_projects")
         .select("title")
@@ -174,15 +204,14 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
 
       toast({ title: "Profile Complete!", description: "Welcome to HireQimah." });
       onComplete();
-    } catch (err) {
+    } catch {
       toast({ title: "Error", description: "Failed to save profile.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
 
-  // Career suggestions based on major sector
-  const selectedMajorData = allMajors.find(m => m.name === selectedMajor);
+  const selectedMajorData = MAJORS.find(m => m.name === selectedMajor);
   const careerSuggestions = selectedMajorData
     ? getCareerSuggestions(selectedMajorData.sector)
     : [];
@@ -207,7 +236,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
         <p className="text-sm text-muted-foreground">90% completion required to access your dashboard</p>
       </div>
 
-      {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="font-medium">{progress}% Complete</span>
@@ -216,7 +244,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
         <Progress value={progress} className="h-3" />
       </div>
 
-      {/* Step Indicators */}
       <div className="flex gap-2 justify-center">
         {STEPS.map((s, i) => (
           <button
@@ -232,7 +259,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
         ))}
       </div>
 
-      {/* Step Content */}
       <motion.div
         key={step}
         className="rounded-xl border bg-card p-6 space-y-4"
@@ -250,7 +276,7 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
               <Select value={selectedUni} onValueChange={setSelectedUni}>
                 <SelectTrigger><SelectValue placeholder="Select university" /></SelectTrigger>
                 <SelectContent className="max-h-60">
-                  {universities.map(u => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}
+                  {SAUDI_UNIVERSITIES.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -259,7 +285,7 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
               <Select value={selectedMajor} onValueChange={setSelectedMajor}>
                 <SelectTrigger><SelectValue placeholder="Select major" /></SelectTrigger>
                 <SelectContent className="max-h-60">
-                  {majors.map(m => <SelectItem key={m.id} value={m.name}>{m.name} <span className="text-muted-foreground ml-1">({m.sector})</span></SelectItem>)}
+                  {MAJORS.map(m => <SelectItem key={m.name} value={m.name}>{m.name} <span className="text-muted-foreground ml-1">({m.sector})</span></SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -294,7 +320,7 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   className="pl-10"
-                  placeholder="e.g., Cybersecurity Analyst, Data Scientist, Corporate Lawyer..."
+                  placeholder="e.g., Cybersecurity Analyst, Data Scientist..."
                   value={careerTarget || careerSearch}
                   onChange={e => { setCareerSearch(e.target.value); setCareerTarget(e.target.value); }}
                 />
@@ -321,7 +347,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
 
         {step === 2 && (
           <div className="space-y-6">
-            {/* Skills */}
             <div className="space-y-3">
               <Label>Skills (add at least 1) *</Label>
               <div className="flex gap-2">
@@ -339,7 +364,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
               </div>
             </div>
 
-            {/* Projects */}
             <div className="space-y-3">
               <Label>Projects (add at least 1) *</Label>
               <div className="space-y-2">
@@ -364,7 +388,6 @@ const StudentOnboarding = ({ userId, onComplete }: OnboardingProps) => {
         )}
       </motion.div>
 
-      {/* Navigation */}
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
           <ChevronLeft className="h-4 w-4 mr-1" />Back

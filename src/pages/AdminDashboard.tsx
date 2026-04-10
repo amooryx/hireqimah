@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import StatCard from "@/components/StatCard";
 import { supabase } from "@/integrations/supabase/client";
-import { untypedTable } from "@/lib/untypedTable";
 import type { AuthUser } from "@/lib/supabaseAuth";
 import {
   ShieldCheck, Users, FileCheck, Settings, CheckCircle, XCircle, Clock,
@@ -21,30 +20,22 @@ interface AdminDashboardProps { user: AuthUser; }
 const AdminDashboard = ({ user: authUser }: AdminDashboardProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ users: 0, students: 0, hrUsers: 0, universities: 0, pendingVerifications: 0, auditCount: 0, interviews: 0 });
-  const [verifications, setVerifications] = useState<any[]>([]);
+  const [stats, setStats] = useState({ users: 0, students: 0, hrUsers: 0, universities: 0, auditCount: 0 });
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
-  const [flaggedDocs, setFlaggedDocs] = useState<any[]>([]);
 
   const loadDashboard = useCallback(async () => {
     const [
       { count: usersCount },
       { data: studentsData },
-      { data: pendingData },
       { data: auditData },
       { data: rolesData },
-      { data: flagged },
-      { count: interviewCount },
     ] = await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("student_profiles").select("*, profiles!inner(full_name, email, user_id)").order("ers_score", { ascending: false }).limit(100),
-      supabase.from("verification_requests").select("*, profiles!inner(full_name)").eq("status", "pending").order("created_at", { ascending: false }),
       supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("user_roles").select("role"),
-      supabase.from("document_integrity").select("*, profiles:user_id(full_name)").eq("flag", "REVIEW_REQUIRED").limit(20),
-      untypedTable("interview_requests").select("*", { count: "exact", head: true }),
     ]);
 
     const roleCounts = (rolesData || []).reduce((acc: Record<string, number>, r: any) => {
@@ -56,27 +47,15 @@ const AdminDashboard = ({ user: authUser }: AdminDashboardProps) => {
       students: roleCounts["student"] || 0,
       hrUsers: roleCounts["hr"] || 0,
       universities: roleCounts["university"] || 0,
-      pendingVerifications: (pendingData || []).length,
       auditCount: (auditData || []).length,
-      interviews: interviewCount || 0,
     });
     setStudents(studentsData || []);
-    setVerifications(pendingData || []);
     setAuditLogs(auditData || []);
     setRoles(rolesData || []);
-    setFlaggedDocs(flagged || []);
     setLoading(false);
   }, []);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
-
-  const handleVerification = async (id: string, status: "approved" | "rejected", notes?: string) => {
-    await supabase.from("verification_requests").update({
-      status, reviewer_id: authUser.id, reviewed_at: new Date().toISOString(), reviewer_notes: notes || null,
-    }).eq("id", id);
-    toast({ title: `Verification ${status}` });
-    loadDashboard();
-  };
 
   if (loading) {
     return (
@@ -103,22 +82,19 @@ const AdminDashboard = ({ user: authUser }: AdminDashboardProps) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Users} label="Total Users" value={stats.users} delay={0} />
-        <StatCard icon={Clock} label="Pending Verifications" value={stats.pendingVerifications} delay={0.1} />
-        <StatCard icon={Calendar} label="Total Interviews" value={stats.interviews} delay={0.2} />
+        <StatCard icon={BarChart3} label="Students" value={stats.students} delay={0.1} />
+        <StatCard icon={Briefcase} label="HR Users" value={stats.hrUsers} delay={0.2} />
         <StatCard icon={Activity} label="Audit Entries" value={stats.auditCount} delay={0.3} />
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1 hidden sm:inline" />Overview</TabsTrigger>
           <TabsTrigger value="market"><TrendingUp className="h-4 w-4 mr-1 hidden sm:inline" />Market</TabsTrigger>
-          <TabsTrigger value="verify"><FileCheck className="h-4 w-4 mr-1 hidden sm:inline" />Verify</TabsTrigger>
-          <TabsTrigger value="flagged"><AlertTriangle className="h-4 w-4 mr-1 hidden sm:inline" />Flagged</TabsTrigger>
           <TabsTrigger value="users"><Users className="h-4 w-4 mr-1 hidden sm:inline" />Users</TabsTrigger>
           <TabsTrigger value="audit"><Activity className="h-4 w-4 mr-1 hidden sm:inline" />Audit</TabsTrigger>
         </TabsList>
 
-        {/* Overview */}
         <TabsContent value="overview">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {Object.entries(roleCounts).map(([role, count]) => (
@@ -131,7 +107,7 @@ const AdminDashboard = ({ user: authUser }: AdminDashboardProps) => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="rounded-xl border bg-card p-6">
               <h3 className="font-semibold font-heading mb-4">ERS Weight Configuration</h3>
-              <p className="text-xs text-muted-foreground mb-4">Weights auto-adjust per major track (tech, business, engineering, medical, etc.)</p>
+              <p className="text-xs text-muted-foreground mb-4">Weights auto-adjust per major track</p>
               <div className="space-y-4">
                 {[
                   { label: "Academic Performance", weight: 40 },
@@ -169,68 +145,10 @@ const AdminDashboard = ({ user: authUser }: AdminDashboardProps) => {
           </div>
         </TabsContent>
 
-        {/* Market Intelligence */}
         <TabsContent value="market">
           <MarketIntelligenceDashboard />
         </TabsContent>
 
-        {/* Verifications */}
-        <TabsContent value="verify">
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Verification Queue</h3>
-            {verifications.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No pending verifications.</p>
-            ) : (
-              <div className="space-y-3">
-                {verifications.map((v, i) => (
-                  <motion.div key={v.id} className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border p-4"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{v.profiles?.full_name || "User"}</p>
-                      <p className="text-xs text-muted-foreground">{v.resource_type} · {new Date(v.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleVerification(v.id, "approved")}>
-                        <CheckCircle className="h-4 w-4 mr-1" />Approve
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleVerification(v.id, "rejected")}>
-                        <XCircle className="h-4 w-4 mr-1" />Reject
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Flagged Documents */}
-        <TabsContent value="flagged">
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Flagged Documents</h3>
-            {flaggedDocs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No flagged documents.</p>
-            ) : (
-              <div className="space-y-3">
-                {flaggedDocs.map((doc, i) => (
-                  <motion.div key={doc.id} className="rounded-lg border p-4 border-destructive/30"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium">{doc.file_path?.split("/").pop() || "Document"}</p>
-                        <p className="text-xs text-muted-foreground">{doc.file_type} · {new Date(doc.created_at).toLocaleDateString()}</p>
-                        {doc.flag_reason && <p className="text-xs text-destructive mt-1">{doc.flag_reason}</p>}
-                      </div>
-                      <Badge variant="destructive" className="text-[10px]">{doc.flag}</Badge>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Users */}
         <TabsContent value="users">
           <div className="rounded-xl border bg-card p-6">
             <h4 className="font-semibold mb-3">Top Students by ERS</h4>
@@ -249,7 +167,6 @@ const AdminDashboard = ({ user: authUser }: AdminDashboardProps) => {
           </div>
         </TabsContent>
 
-        {/* Audit */}
         <TabsContent value="audit">
           <div className="rounded-xl border bg-card p-6">
             <h3 className="text-lg font-semibold font-heading mb-4">Audit Log</h3>

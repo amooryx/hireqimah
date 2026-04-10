@@ -21,21 +21,16 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
   const [loading, setLoading] = useState(true);
   const [uniProfile, setUniProfile] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
-  const [verifications, setVerifications] = useState<any[]>([]);
   const [certStats, setCertStats] = useState<any[]>([]);
   const [skillGaps, setSkillGaps] = useState<any[]>([]);
 
   const loadDashboard = useCallback(async () => {
-    const [{ data: uni }, { data: studentsData }, { data: pendingData }, { data: certs }, { data: jobData }] = await Promise.all([
+    const [{ data: uni }, { data: studentsData }, { data: certs }, { data: jobData }] = await Promise.all([
       supabase.from("university_profiles").select("*").eq("user_id", authUser.id).single(),
       supabase.from("student_profiles")
         .select("*, profiles!inner(full_name, email, user_id)")
         .order("ers_score", { ascending: false })
         .limit(500),
-      supabase.from("verification_requests")
-        .select("*, profiles!inner(full_name)")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false }),
       supabase.from("student_certifications")
         .select("user_id, certification_catalog(name, category)")
         .limit(500),
@@ -48,9 +43,7 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
       ? (studentsData || []).filter((s: any) => s.university?.toLowerCase().includes(uniName.toLowerCase()))
       : (studentsData || []);
     setStudents(filtered);
-    setVerifications(pendingData || []);
 
-    // Cert trend stats
     const certCounts: Record<string, number> = {};
     (certs || []).forEach((c: any) => {
       const name = c.certification_catalog?.name || "Other";
@@ -58,7 +51,6 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
     });
     setCertStats(Object.entries(certCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10));
 
-    // Skill gap analysis: demanded skills vs student majors
     const demandedSkills: Record<string, number> = {};
     (jobData || []).forEach((j: any) => {
       (j.required_skills || []).forEach((s: string) => {
@@ -71,16 +63,6 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
   }, [authUser.id]);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
-
-  const handleVerification = async (id: string, status: "approved" | "rejected") => {
-    await supabase.from("verification_requests").update({
-      status,
-      reviewer_id: authUser.id,
-      reviewed_at: new Date().toISOString(),
-    }).eq("id", id);
-    toast({ title: `Verification ${status}` });
-    loadDashboard();
-  };
 
   const handleUpload = useCallback((type: "conduct" | "attendance") => {
     const input = document.createElement("input");
@@ -141,14 +123,12 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
       </div>
 
       <Tabs defaultValue="cohort" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="cohort"><BarChart3 className="h-4 w-4 mr-1 hidden sm:inline" />Cohort</TabsTrigger>
           <TabsTrigger value="intelligence"><Target className="h-4 w-4 mr-1 hidden sm:inline" />Intelligence</TabsTrigger>
           <TabsTrigger value="uploads"><Upload className="h-4 w-4 mr-1 hidden sm:inline" />Records</TabsTrigger>
-          <TabsTrigger value="verify"><FileCheck className="h-4 w-4 mr-1 hidden sm:inline" />Verify</TabsTrigger>
         </TabsList>
 
-        {/* Cohort Analytics */}
         <TabsContent value="cohort">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="rounded-xl border bg-card p-6">
@@ -217,7 +197,6 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
           </div>
         </TabsContent>
 
-        {/* Intelligence Tab */}
         <TabsContent value="intelligence">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="rounded-xl border bg-card p-6">
@@ -279,7 +258,6 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
           </div>
         </TabsContent>
 
-        {/* Records Upload */}
         <TabsContent value="uploads">
           <div className="rounded-xl border bg-card p-6">
             <h3 className="text-lg font-semibold font-heading mb-4">Upload University Records</h3>
@@ -298,36 +276,6 @@ const UniversityDashboard = ({ user: authUser }: UniversityDashboardProps) => {
                 <span className="text-[10px] text-muted-foreground">CSV, PDF, XLSX · Max 10MB</span>
               </Button>
             </div>
-          </div>
-        </TabsContent>
-
-        {/* Verifications */}
-        <TabsContent value="verify">
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Verification Queue ({verifications.length})</h3>
-            {verifications.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No pending verifications.</p>
-            ) : (
-              <div className="space-y-3">
-                {verifications.map((v, i) => (
-                  <motion.div key={v.id} className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border p-4"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{v.profiles?.full_name || "User"}</p>
-                      <p className="text-xs text-muted-foreground">{v.resource_type} · {new Date(v.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleVerification(v.id, "approved")}>
-                        <CheckCircle className="h-4 w-4 mr-1" />Approve
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleVerification(v.id, "rejected")}>
-                        Reject
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
           </div>
         </TabsContent>
       </Tabs>
