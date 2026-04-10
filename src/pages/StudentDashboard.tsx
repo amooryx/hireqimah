@@ -116,10 +116,8 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
 
       if (type === "transcript") {
         await supabase.from("transcript_uploads").insert({ user_id: authUser.id, file_path: path });
-        await supabase.from("verification_requests").insert({ user_id: authUser.id, resource_type: "transcript", resource_id: path });
       } else if (type === "certificate") {
         await supabase.from("student_certifications").insert({ user_id: authUser.id, custom_name: file.name.replace(/\.[^.]+$/, ""), file_path: path });
-        await supabase.from("verification_requests").insert({ user_id: authUser.id, resource_type: "certification", resource_id: path });
       } else if (type === "project") {
         const title = file.name.replace(/\.[^.]+$/, "");
         await supabase.from("student_projects").insert({ user_id: authUser.id, title, file_path: path });
