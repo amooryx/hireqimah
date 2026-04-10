@@ -131,6 +131,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "leaderboard.studentsCount": { en: "students", ar: "طالب" },
   "leaderboard.avgERS": { en: "Avg ERS", ar: "متوسط ERS" },
   "leaderboard.footer": { en: "Powered by HireQimah · Updated in real-time", ar: "بدعم من HireQimah · يُحدّث تلقائياً" },
+  "leaderboard.you": { en: "You", ar: "أنت" },
 
   // Vision 2030
   "vision.title": { en: "Supporting Saudi Vision 2030", ar: "ندعم رؤية السعودية 2030" },
