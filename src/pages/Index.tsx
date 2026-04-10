@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import logo from "@/assets/hireqimah-logo.png";
+import { useI18n } from "@/lib/i18n";
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -18,6 +19,7 @@ const fadeUp = {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,42 +39,38 @@ const Index = () => {
               className="text-3xl md:text-5xl lg:text-6xl font-bold font-heading text-white mb-4 leading-tight"
               initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.6 }}
             >
-              AI-Powered<br />Employability<br /><span className="text-[hsl(207,89%,80%)]">Intelligence</span>
+              {t("hero.title1")}<br />{t("hero.title2")}<br /><span className="text-[hsl(207,89%,80%)]">{t("hero.title3")}</span>
             </motion.h1>
 
             <motion.p
               className="text-base md:text-lg text-white/90 mb-6 leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}
             >
-              HireQimah helps companies identify the most job-ready graduates and helps students prepare for real Saudi labor market demand — powered by verified data and AI analysis of 100+ live job postings.
+              {t("hero.subtitle")}
             </motion.p>
 
             <motion.div className="space-y-1 mb-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              {[
-                "Transparent Employment Readiness Scores (ERS)",
-                "Market-driven certification and skill valuations",
-                "Verified academic records and project portfolios",
-              ].map((t) => (
-                <p key={t} className="text-sm text-white/80 flex items-center gap-2">
-                  <CheckCircle className="h-3.5 w-3.5 text-[hsl(var(--gold))] shrink-0" />{t}
+              {[t("hero.check1"), t("hero.check2"), t("hero.check3")].map((text) => (
+                <p key={text} className="text-sm text-white/80 flex items-center gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-[hsl(var(--gold))] shrink-0" />{text}
                 </p>
               ))}
             </motion.div>
 
             <motion.div className="flex flex-wrap gap-4 justify-center sm:justify-start" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
               <Button size="lg" className="bg-[hsl(207,89%,80%)] text-[hsl(203,79%,10%)] shadow-lg hover:shadow-xl font-semibold px-8 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-[hsl(207,89%,85%)]" onClick={() => navigate("/signup?role=student")}>
-                <GraduationCap className="h-5 w-5" />Sign Up as Student
+                <GraduationCap className="h-5 w-5" />{t("hero.cta.student")}
               </Button>
               <Button size="lg" className="bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl font-semibold px-8 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-secondary/90" onClick={() => navigate("/signup?role=hr")}>
-                <Briefcase className="h-5 w-5" />Sign Up as HR
+                <Briefcase className="h-5 w-5" />{t("hero.cta.hr")}
               </Button>
               <Button size="lg" className="bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl font-semibold px-8 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-secondary/90" onClick={() => navigate("/signup?role=university")}>
-                <Building2 className="h-5 w-5" />Sign Up as University
+                <Building2 className="h-5 w-5" />{t("hero.cta.university")}
               </Button>
             </motion.div>
 
             <motion.p className="mt-6 text-white/50 text-xs tracking-wide uppercase" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
-              The first Employment Readiness Infrastructure for Saudi Arabia
+              {t("hero.tagline")}
             </motion.p>
           </div>
         </div>
@@ -82,17 +80,15 @@ const Index = () => {
       <section id="features" className="container py-16 md:py-20">
         <motion.div className="text-center mb-10" {...fadeUp}>
           <BarChart3 className="h-8 w-8 text-primary mx-auto mb-3" />
-          <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">How ERS Works</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            The Employment Readiness Score combines multiple verified data sources into one transparent, market-driven score.
-          </p>
+          <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">{t("ers.title")}</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">{t("ers.desc")}</p>
         </motion.div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
           {[
-            { step: "1", icon: BookOpen, title: "Upload Verified Records", desc: "Transcripts, certifications, and projects are verified with SHA-256 integrity checks." },
-            { step: "2", icon: TrendingUp, title: "AI Market Analysis", desc: "We analyze 100+ real Saudi job postings to determine which skills and certifications matter." },
-            { step: "3", icon: Cpu, title: "Dynamic Scoring", desc: "Each category (Academic, Certifications, Projects, Soft Skills) is scored with market-driven weights." },
-            { step: "4", icon: Trophy, title: "Ranked & Discoverable", desc: "Students appear on leaderboards. Employers filter by ERS, major, and certifications." },
+            { step: "1", icon: BookOpen, title: t("ers.step1.title"), desc: t("ers.step1.desc") },
+            { step: "2", icon: TrendingUp, title: t("ers.step2.title"), desc: t("ers.step2.desc") },
+            { step: "3", icon: Cpu, title: t("ers.step3.title"), desc: t("ers.step3.desc") },
+            { step: "4", icon: Trophy, title: t("ers.step4.title"), desc: t("ers.step4.desc") },
           ].map((s, i) => (
             <motion.div key={s.step} className="relative rounded-xl border bg-card p-6 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.1 }}>
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground text-xs font-bold px-3 py-1">{s.step}</span>
@@ -109,18 +105,16 @@ const Index = () => {
         <div className="container">
           <motion.div className="text-center mb-10" {...fadeUp}>
             <Shield className="h-8 w-8 text-primary mx-auto mb-3" />
-            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">Why Companies Trust ERS</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              ERS eliminates guesswork in graduate hiring by providing verified, market-calibrated readiness signals.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">{t("companies.title")}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t("companies.desc")}</p>
           </motion.div>
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
-              { icon: FileCheck, title: "Verified Documents", desc: "Every transcript and certification is integrity-checked. No inflated credentials pass through." },
-              { icon: TrendingUp, title: "Real Market Data", desc: "Scores reflect actual Saudi job demand from LinkedIn, Bayt, GulfTalent, Indeed, and Jadarat." },
-              { icon: Eye, title: "Full Transparency", desc: "HR can see exactly how each score component was calculated — no black boxes." },
+              { icon: FileCheck, title: t("companies.verified.title"), desc: t("companies.verified.desc") },
+              { icon: TrendingUp, title: t("companies.market.title"), desc: t("companies.market.desc") },
+              { icon: Eye, title: t("companies.transparent.title"), desc: t("companies.transparent.desc") },
             ].map((item, i) => (
-              <motion.div key={item.title} className="rounded-xl border bg-card p-6 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.1 }}>
+              <motion.div key={i} className="rounded-xl border bg-card p-6 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.1 }}>
                 <item.icon className="h-8 w-8 text-primary mx-auto mb-3" />
                 <h3 className="font-semibold font-heading mb-1">{item.title}</h3>
                 <p className="text-sm text-muted-foreground">{item.desc}</p>
@@ -134,15 +128,15 @@ const Index = () => {
       <section className="container py-16 md:py-20">
         <motion.div className="text-center mb-10" {...fadeUp}>
           <University className="h-8 w-8 text-primary mx-auto mb-3" />
-          <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">How Universities Benefit</h2>
+          <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">{t("uni.title")}</h2>
         </motion.div>
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {[
-            { icon: BarChart3, title: "Cohort Analytics", desc: "Track average ERS by department and identify underperforming programs before graduation." },
-            { icon: Target, title: "Market Congruence", desc: "See if your graduate supply matches employer demand with the Market Congruence Index." },
-            { icon: Map, title: "Curriculum Alignment", desc: "Skill demand heatmaps show which certifications and skills employers actually require." },
+            { icon: BarChart3, title: t("uni.cohort.title"), desc: t("uni.cohort.desc") },
+            { icon: Target, title: t("uni.congruence.title"), desc: t("uni.congruence.desc") },
+            { icon: Map, title: t("uni.curriculum.title"), desc: t("uni.curriculum.desc") },
           ].map((item, i) => (
-            <motion.div key={item.title} className="rounded-xl border bg-card p-6 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.1 }}>
+            <motion.div key={i} className="rounded-xl border bg-card p-6 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.1 }}>
               <item.icon className="h-8 w-8 text-primary mx-auto mb-3" />
               <h3 className="font-semibold font-heading mb-1">{item.title}</h3>
               <p className="text-sm text-muted-foreground">{item.desc}</p>
@@ -155,22 +149,22 @@ const Index = () => {
       <section id="for-students" className="bg-accent/50 py-16 md:py-20">
         <div className="container">
           <motion.div className="text-center mb-10" {...fadeUp}>
-            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">Built for Every Stakeholder</h2>
+            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">{t("stakeholders.title")}</h2>
           </motion.div>
           <div className="grid lg:grid-cols-3 gap-6 items-stretch max-w-5xl mx-auto">
             {[
-              { icon: GraduationCap, emoji: "🎓", title: "Students", desc: "Build a verified employability profile. Get AI career roadmaps. Track your ERS against peers.", cta: "Sign Up as Student", path: "/signup?role=student" },
-              { icon: Building2, emoji: "🏢", title: "Employers", desc: "Discover ranked talent. Filter by skills, certifications, and ERS. Manage a full hiring pipeline.", cta: "Sign Up as HR", path: "/signup?role=hr" },
-              { icon: University, emoji: "🏛️", title: "Universities", desc: "Monitor student readiness by cohort. Align curriculum with market demand. Verify records.", cta: "Sign Up as University", path: "/signup?role=university" },
+              { icon: GraduationCap, emoji: "🎓", title: t("stakeholders.students.title"), desc: t("stakeholders.students.desc"), cta: t("hero.cta.student"), path: "/signup?role=student" },
+              { icon: Building2, emoji: "🏢", title: t("stakeholders.employers.title"), desc: t("stakeholders.employers.desc"), cta: t("hero.cta.hr"), path: "/signup?role=hr" },
+              { icon: University, emoji: "🏛️", title: t("stakeholders.universities.title"), desc: t("stakeholders.universities.desc"), cta: t("hero.cta.university"), path: "/signup?role=university" },
             ].map((r, i) => (
-              <motion.div key={r.title} className="rounded-xl border bg-card p-6 shadow-sm flex flex-col h-full" {...fadeUp} transition={{ delay: i * 0.1 }}>
+              <motion.div key={i} className="rounded-xl border bg-card p-6 shadow-sm flex flex-col h-full" {...fadeUp} transition={{ delay: i * 0.1 }}>
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
                   <r.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-bold font-heading mb-1">{r.emoji} {r.title}</h3>
                 <p className="text-sm text-muted-foreground mb-4 flex-1">{r.desc}</p>
                 <Button variant="outline" className="w-full mt-auto" onClick={() => navigate(r.path)}>
-                  {r.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                  {r.cta} <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4" />
                 </Button>
               </motion.div>
             ))}
@@ -181,17 +175,17 @@ const Index = () => {
       {/* ───────── PLATFORM CAPABILITIES ───────── */}
       <section className="container py-16 md:py-20">
         <motion.div className="text-center mb-10" {...fadeUp}>
-          <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">Platform Capabilities</h2>
+          <h2 className="text-2xl md:text-3xl font-bold font-heading mb-2">{t("capabilities.title")}</h2>
         </motion.div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
           {[
-            { icon: Cpu, label: "Dynamic ERS Engine" },
-            { icon: Brain, label: "AI Career Roadmaps" },
-            { icon: Award, label: "Certification Intelligence" },
-            { icon: TrendingUp, label: "Live Market Dashboard" },
-            { icon: Trophy, label: "National Leaderboards" },
+            { icon: Cpu, label: t("cap.ers") },
+            { icon: Brain, label: t("cap.ai") },
+            { icon: Award, label: t("cap.cert") },
+            { icon: TrendingUp, label: t("cap.market") },
+            { icon: Trophy, label: t("cap.leaderboard") },
           ].map((cap, i) => (
-            <motion.div key={cap.label} className="rounded-xl border bg-card p-5 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.08 }}>
+            <motion.div key={i} className="rounded-xl border bg-card p-5 text-center shadow-sm" {...fadeUp} transition={{ delay: i * 0.08 }}>
               <cap.icon className="h-7 w-7 text-primary mx-auto mb-2" />
               <p className="text-sm font-medium">{cap.label}</p>
             </motion.div>
@@ -204,12 +198,10 @@ const Index = () => {
         <div className="container max-w-3xl text-center">
           <motion.div {...fadeUp}>
             <Trophy className="h-10 w-10 text-[hsl(var(--gold))] mx-auto mb-4" />
-            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-3">National Talent Leaderboards</h2>
-            <p className="text-muted-foreground mb-4">
-              Ranked by ERS with verification badges for certified transcripts, projects, and credentials.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-3">{t("leaderboard.title")}</h2>
+            <p className="text-muted-foreground mb-4">{t("leaderboard.desc")}</p>
             <Button variant="outline" className="mt-2" onClick={() => navigate("/leaderboard")}>
-              View Leaderboard <ArrowRight className="ml-2 h-4 w-4" />
+              {t("leaderboard.cta")} <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4" />
             </Button>
           </motion.div>
         </div>
@@ -220,10 +212,8 @@ const Index = () => {
         <div className="max-w-3xl mx-auto text-center">
           <motion.div {...fadeUp}>
             <Globe className="h-10 w-10 text-[hsl(var(--deep-green))] mx-auto mb-4" />
-            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-3">Aligned with Saudi Vision 2030</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              HireQimah supports Saudi Arabia's workforce transformation by connecting education outcomes with labor market demand and enabling transparent employability signals.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold font-heading mb-3">{t("vision.title")}</h2>
+            <p className="text-muted-foreground leading-relaxed">{t("vision.desc")}</p>
           </motion.div>
         </div>
       </section>
@@ -232,22 +222,22 @@ const Index = () => {
       <section className="container py-20 md:py-24">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div {...fadeUp}>
-            <h2 className="text-2xl md:text-4xl font-bold font-heading mb-6">Start Building Your Qimah</h2>
+            <h2 className="text-2xl md:text-4xl font-bold font-heading mb-6">{t("cta.title")}</h2>
             <div className="flex flex-wrap justify-center gap-3">
               <Button size="lg" className="font-semibold px-8 h-12" onClick={() => navigate("/signup?role=student")}>
-                <GraduationCap className="mr-2 h-5 w-5" />Sign Up as Student
+                <GraduationCap className="ltr:mr-2 rtl:ml-2 h-5 w-5" />{t("hero.cta.student")}
               </Button>
               <Button size="lg" variant="outline" className="font-semibold px-8 h-12" onClick={() => navigate("/signup?role=hr")}>
-                <Building2 className="mr-2 h-5 w-5" />Sign Up as HR
+                <Building2 className="ltr:mr-2 rtl:ml-2 h-5 w-5" />{t("hero.cta.hr")}
               </Button>
               <Button size="lg" variant="outline" className="font-semibold px-8 h-12" onClick={() => navigate("/signup?role=university")}>
-                <University className="mr-2 h-5 w-5" />Sign Up as University
+                <University className="ltr:mr-2 rtl:ml-2 h-5 w-5" />{t("hero.cta.university")}
               </Button>
             </div>
             <p className="mt-6 text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t("cta.already")}{" "}
               <button onClick={() => navigate("/auth/select-role?mode=signin")} className="text-primary hover:underline font-medium">
-                Sign In
+                {t("nav.signin")}
               </button>
             </p>
           </motion.div>
@@ -260,19 +250,19 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <img src={logo} alt="HireQimah" className="h-8" />
-              <span className="text-sm text-muted-foreground">Employability Intelligence Platform</span>
+              <span className="text-sm text-muted-foreground">{t("footer.tagline")}</span>
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <button onClick={() => navigate("/about")} className="hover:text-primary transition-colors">About</button>
-              <button onClick={() => navigate("/founders")} className="hover:text-primary transition-colors">Team</button>
-              <button onClick={() => navigate("/security")} className="hover:text-primary transition-colors">Security</button>
-              <button onClick={() => navigate("/privacy")} className="hover:text-primary transition-colors">Privacy</button>
-              <button onClick={() => navigate("/terms")} className="hover:text-primary transition-colors">Terms</button>
-              <button onClick={() => navigate("/contact")} className="hover:text-primary transition-colors">Contact</button>
-              <button onClick={() => navigate("/leaderboard")} className="hover:text-primary transition-colors">Leaderboard</button>
+              <button onClick={() => navigate("/about")} className="hover:text-primary transition-colors">{t("footer.about")}</button>
+              <button onClick={() => navigate("/founders")} className="hover:text-primary transition-colors">{t("footer.team")}</button>
+              <button onClick={() => navigate("/security")} className="hover:text-primary transition-colors">{t("footer.security")}</button>
+              <button onClick={() => navigate("/privacy")} className="hover:text-primary transition-colors">{t("footer.privacy")}</button>
+              <button onClick={() => navigate("/terms")} className="hover:text-primary transition-colors">{t("footer.terms")}</button>
+              <button onClick={() => navigate("/contact")} className="hover:text-primary transition-colors">{t("footer.contact")}</button>
+              <button onClick={() => navigate("/leaderboard")} className="hover:text-primary transition-colors">{t("footer.leaderboard")}</button>
             </div>
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-6">© {new Date().getFullYear()} HireQimah. All rights reserved.</p>
+          <p className="text-center text-xs text-muted-foreground mt-6">© {new Date().getFullYear()} HireQimah. {t("footer.rights")}</p>
         </div>
       </footer>
     </div>
