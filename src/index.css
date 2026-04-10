@@ -7,13 +7,13 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 215 25% 15%;
+    --foreground: 205 75% 15%;
 
-    --card: 210 33% 98%;
-    --card-foreground: 215 25% 15%;
+    --card: 210 33% 98.5%;
+    --card-foreground: 205 75% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 205 75% 15%;
 
     --primary: 214 84% 50%;
     --primary-foreground: 0 0% 100%;
@@ -22,7 +22,7 @@
     --primary-light-foreground: 214 84% 50%;
 
     --secondary: 210 33% 96%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary-foreground: 205 75% 27%;
 
     --muted: 210 25% 95%;
     --muted-foreground: 215 14% 46%;
@@ -33,6 +33,15 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
+    --success: 142 72% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --navy: 205 75% 20%;
+    --navy-foreground: 0 0% 100%;
+
     --border: 214 20% 90%;
     --input: 214 20% 90%;
     --ring: 214 84% 50%;
@@ -42,7 +51,7 @@
     --font-display: 'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif;
     --font-body: 'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif;
 
-    --gradient-hero: linear-gradient(135deg, hsl(214 84% 50%) 0%, hsl(210 90% 62%) 50%, hsl(200 85% 55%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(205 75% 20%) 0%, hsl(214 84% 50%) 60%, hsl(200 85% 55%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(210 100% 97%) 0%, hsl(0 0% 100%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 33% 98%) 100%);
 
