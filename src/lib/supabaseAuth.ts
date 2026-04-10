@@ -102,7 +102,11 @@ export async function signIn(email: string, password: string) {
   if (error) {
     // Record failed attempt
     await callAuthGuard("record_attempt", email, { success: false });
-    return { success: false as const, error: error.message };
+    // Sanitize error: never expose internal details
+    const safeMsg = error.message?.includes("Invalid login")
+      ? "Invalid email or password."
+      : "Authentication failed. Please try again.";
+    return { success: false as const, error: safeMsg };
   }
 
   // Record successful attempt (clears failures)
