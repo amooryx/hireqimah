@@ -1,41 +1,43 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { GraduationCap, Building2, University } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 import logo from "@/assets/hireqimah-logo.png";
-
-const roles = [
-  {
-    key: "student",
-    label: "Student",
-    icon: GraduationCap,
-    desc: "Build your Qimah, track your readiness, apply for CO-OP & internships.",
-    signinPath: "/login/student",
-    signupPath: "/signup?role=student",
-  },
-  {
-    key: "hr",
-    label: "HR / Company",
-    icon: Building2,
-    desc: "Post opportunities, filter verified candidates, hire Qimah students.",
-    signinPath: "/login/hr",
-    signupPath: "/signup?role=hr",
-  },
-  {
-    key: "university",
-    label: "University",
-    icon: University,
-    desc: "Upload attendance, conduct, and student engagement records.",
-    signinPath: "/login/university",
-    signupPath: "/signup?role=university",
-  },
-] as const;
 
 const RoleSelect = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useI18n();
   const mode = searchParams.get("mode") || "signin";
   const isSignUp = mode === "signup";
+
+  const roles = [
+    {
+      key: "student",
+      label: t("role.student"),
+      icon: GraduationCap,
+      desc: t("role.student.desc"),
+      signinPath: "/login/student",
+      signupPath: "/signup?role=student",
+    },
+    {
+      key: "hr",
+      label: t("role.hr"),
+      icon: Building2,
+      desc: t("role.hr.desc"),
+      signinPath: "/login/hr",
+      signupPath: "/signup?role=hr",
+    },
+    {
+      key: "university",
+      label: t("role.university"),
+      icon: University,
+      desc: t("role.university.desc"),
+      signinPath: "/login/university",
+      signupPath: "/signup?role=university",
+    },
+  ];
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -48,10 +50,10 @@ const RoleSelect = () => {
         <div className="text-center mb-8">
           <img src={logo} alt="HireQimah" className="mx-auto h-14 mb-4" />
           <h1 className="text-2xl font-bold font-heading">
-            {isSignUp ? "Create Your Account" : "Welcome Back"}
+            {isSignUp ? t("role.create") : t("role.welcome")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isSignUp ? "Select your role to get started" : "Select your role to sign in"}
+            {isSignUp ? t("role.selectSignup") : t("role.selectSignin")}
           </p>
         </div>
 
@@ -74,7 +76,7 @@ const RoleSelect = () => {
                 <h2 className="text-lg font-semibold font-heading">{role.label}</h2>
                 <p className="text-xs text-muted-foreground leading-relaxed">{role.desc}</p>
                 <span className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors group-hover:bg-primary/90">
-                  Continue as {role.label.split(" /")[0]}
+                  {t("role.continueAs")} {role.label.split(" /")[0]}
                 </span>
               </button>
             </motion.div>
@@ -83,19 +85,19 @@ const RoleSelect = () => {
 
         <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            {isSignUp ? t("role.alreadyHave") : t("role.noAccount")}{" "}
             <button
               onClick={() => navigate(`/auth/select-role?mode=${isSignUp ? "signin" : "signup"}`)}
               className="text-primary hover:underline font-medium"
             >
-              {isSignUp ? "Sign In" : "Sign Up"}
+              {isSignUp ? t("nav.signin") : t("nav.signup")}
             </button>
           </p>
           <button
             onClick={() => navigate("/admin/login")}
             className="text-xs text-muted-foreground hover:text-primary transition-colors"
           >
-            Administrator Access →
+            {t("role.adminAccess")} →
           </button>
         </div>
       </motion.div>
