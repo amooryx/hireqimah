@@ -10,21 +10,11 @@ import logo from "@/assets/hireqimah-logo.png";
 import { signUp, validatePassword, type AppRole, type AuthUser } from "@/lib/supabaseAuth";
 import { UNIVERSITIES, getMajorsForUniversity } from "@/lib/authStore";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { useI18n } from "@/lib/i18n";
 
 type SignUpRole = "student" | "hr" | "university";
-
-const roleMeta: Record<SignUpRole, { label: string; icon: typeof GraduationCap; desc: string }> = {
-  student: { label: "Student", icon: GraduationCap, desc: "Create your student profile & get your ERS" },
-  hr: { label: "HR / Company", icon: Building2, desc: "Find verified Saudi talent" },
-  university: { label: "University", icon: University, desc: "Partner & manage student verification" },
-};
 
 interface SignUpProps {
   currentUser?: AuthUser | null;
@@ -42,30 +32,35 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
   const [loading, setLoading] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(!!currentUser);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
   const selectedUniversity = form.university || "";
   const availableMajors = getMajorsForUniversity(selectedUniversity);
 
-  // If user is logged in, show modal
+  const roleMeta: Record<SignUpRole, { label: string; icon: typeof GraduationCap; desc: string }> = {
+    student: { label: t("role.student"), icon: GraduationCap, desc: t("signup.studentDesc") },
+    hr: { label: t("role.hr"), icon: Building2, desc: t("signup.hrDesc") },
+    university: { label: t("role.university"), icon: University, desc: t("signup.uniDesc") },
+  };
+
   if (showLogoutModal && currentUser) {
     return (
       <Dialog open={true} onOpenChange={() => setShowLogoutModal(false)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Already Signed In</DialogTitle>
+            <DialogTitle>{t("signup.alreadySignedIn")}</DialogTitle>
             <DialogDescription>
-              You are currently signed in as <strong>{currentUser.full_name}</strong> ({currentUser.role}).
-              Would you like to log out and create a new account?
+              {t("signup.alreadySignedInDesc")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => navigate(`/${currentUser.role === "university" ? "admin" : currentUser.role}`)}>
-              Return to Dashboard
+              {t("signup.returnDashboard")}
             </Button>
             <Button onClick={() => { onLogout?.(); setShowLogoutModal(false); }}>
-              <LogOut className="h-4 w-4 mr-2" /> Log Out & Register
+              <LogOut className="h-4 w-4 ltr:mr-2 rtl:ml-2" /> {t("signup.logoutRegister")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -84,7 +79,6 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
     const pwError = validatePassword(password);
     if (pwError) { setError(pwError); return; }
     
-    // University email restriction for students
     if (role === "student") {
       const blockedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "live.com", "icloud.com", "aol.com", "mail.com", "protonmail.com"];
       const emailDomain = email.split("@")[1]?.toLowerCase() || "";
@@ -141,9 +135,9 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10 mb-4">
             <GraduationCap className="h-8 w-8 text-success" />
           </div>
-          <h2 className="text-xl font-bold font-heading mb-2">Check Your Email</h2>
-          <p className="text-sm text-muted-foreground mb-6">We've sent a verification link to your email. Please verify your account before signing in.</p>
-          <Button onClick={() => navigate(`/login/${role}`)} className="w-full">Go to Sign In</Button>
+          <h2 className="text-xl font-bold font-heading mb-2">{t("signup.checkEmail")}</h2>
+          <p className="text-sm text-muted-foreground mb-6">{t("signup.checkEmailDesc")}</p>
+          <Button onClick={() => navigate(`/login/${role}`)} className="w-full">{t("signup.goToSignIn")}</Button>
         </motion.div>
       </div>
     );
@@ -159,30 +153,32 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-3">
             <meta.icon className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold font-heading">Create {meta.label} Account</h1>
+          <h1 className="text-2xl font-bold font-heading">
+            {role === "student" ? t("signup.studentAccount") : role === "hr" ? t("signup.hrAccount") : t("signup.uniAccount")}
+          </h1>
           <p className="text-sm text-muted-foreground">{meta.desc}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div><Label>Full Name *</Label><Input placeholder="Your full name" value={form.name || ""} onChange={e => set("name", e.target.value)} maxLength={100} /></div>
-          <div><Label>Email *{role === "student" ? " (University email only)" : ""}</Label><Input type="email" placeholder={role === "student" ? "name@university.edu.sa" : "you@example.com"} value={form.email || ""} onChange={e => set("email", e.target.value)} maxLength={255} /></div>
+          <div><Label>{t("signup.fullName")} *</Label><Input placeholder={t("signup.fullName")} value={form.name || ""} onChange={e => set("name", e.target.value)} maxLength={100} /></div>
+          <div><Label>{role === "student" ? t("signup.emailUniOnly") : t("signup.email")} *</Label><Input type="email" placeholder={role === "student" ? "name@university.edu.sa" : "you@example.com"} value={form.email || ""} onChange={e => set("email", e.target.value)} maxLength={255} /></div>
 
           {role === "student" && (
             <>
-              <div><Label>Nationality</Label><Input placeholder="Saudi" value={form.nationality || "Saudi"} onChange={e => set("nationality", e.target.value)} maxLength={50} /></div>
+              <div><Label>{t("signup.nationality")}</Label><Input placeholder="Saudi" value={form.nationality || "Saudi"} onChange={e => set("nationality", e.target.value)} maxLength={50} /></div>
               <div>
-                <Label>University *</Label>
+                <Label>{t("signup.university")} *</Label>
                 <Select value={selectedUniversity} onValueChange={v => { set("university", v); set("major", ""); }}>
-                  <SelectTrigger><SelectValue placeholder="Select university" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("signup.selectUniversity")} /></SelectTrigger>
                   <SelectContent className="max-h-60">
                     {UNIVERSITIES.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Major *</Label>
+                <Label>{t("signup.major")} *</Label>
                 <Select value={form.major || ""} onValueChange={v => set("major", v)} disabled={!selectedUniversity}>
-                  <SelectTrigger><SelectValue placeholder={selectedUniversity ? "Select major" : "Select university first"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={selectedUniversity ? t("signup.selectMajor") : t("signup.selectUniFirst")} /></SelectTrigger>
                   <SelectContent className="max-h-60">
                     {availableMajors.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
@@ -190,18 +186,18 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>GPA Scale *</Label>
+                  <Label>{t("signup.gpaScale")} *</Label>
                   <Select value={form.gpaScale || ""} onValueChange={v => set("gpaScale", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select scale" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("signup.selectScale")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="4">4.0 Scale</SelectItem>
-                      <SelectItem value="5">5.0 Scale</SelectItem>
+                      <SelectItem value="4">4.0</SelectItem>
+                      <SelectItem value="5">5.0</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>GPA</Label>
-                  <Input type="number" step="0.01" min="0" max={form.gpaScale === "5" ? 5 : 4} placeholder={form.gpaScale === "5" ? "e.g. 4.50" : "e.g. 3.50"} value={form.gpa || ""} onChange={e => set("gpa", e.target.value)} />
+                  <Label>{t("signup.gpa")}</Label>
+                  <Input type="number" step="0.01" min="0" max={form.gpaScale === "5" ? 5 : 4} placeholder={form.gpaScale === "5" ? "4.50" : "3.50"} value={form.gpa || ""} onChange={e => set("gpa", e.target.value)} />
                 </div>
               </div>
             </>
@@ -209,22 +205,22 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
 
           {role === "hr" && (
             <>
-              <div><Label>Company Name *</Label><Input placeholder="e.g., Saudi Aramco" value={form.company || ""} onChange={e => set("company", e.target.value)} maxLength={100} /></div>
-              <div><Label>Position</Label><Input placeholder="e.g., HR Manager" value={form.position || ""} onChange={e => set("position", e.target.value)} maxLength={100} /></div>
-              <div><Label>Industry</Label><Input placeholder="e.g., Energy" value={form.industry || ""} onChange={e => set("industry", e.target.value)} maxLength={100} /></div>
+              <div><Label>{t("signup.companyName")} *</Label><Input placeholder="e.g., Saudi Aramco" value={form.company || ""} onChange={e => set("company", e.target.value)} maxLength={100} /></div>
+              <div><Label>{t("signup.position")}</Label><Input placeholder="e.g., HR Manager" value={form.position || ""} onChange={e => set("position", e.target.value)} maxLength={100} /></div>
+              <div><Label>{t("signup.industry")}</Label><Input placeholder="e.g., Energy" value={form.industry || ""} onChange={e => set("industry", e.target.value)} maxLength={100} /></div>
             </>
           )}
 
           {role === "university" && (
             <>
-              <div><Label>University Name</Label><Input placeholder="Official university name" value={form.universityName || ""} onChange={e => set("universityName", e.target.value)} maxLength={150} /></div>
-              <div><Label>Official Domain Email</Label><Input placeholder="e.g., admin@ksu.edu.sa" value={form.officialDomain || ""} onChange={e => set("officialDomain", e.target.value)} maxLength={100} /></div>
-              <div><Label>Admin Contact</Label><Input placeholder="Phone number" value={form.adminContact || ""} onChange={e => set("adminContact", e.target.value)} maxLength={50} /></div>
+              <div><Label>{t("signup.uniName")}</Label><Input placeholder={t("signup.uniName")} value={form.universityName || ""} onChange={e => set("universityName", e.target.value)} maxLength={150} /></div>
+              <div><Label>{t("signup.officialDomain")}</Label><Input placeholder="admin@ksu.edu.sa" value={form.officialDomain || ""} onChange={e => set("officialDomain", e.target.value)} maxLength={100} /></div>
+              <div><Label>{t("signup.adminContact")}</Label><Input placeholder={t("signup.adminContact")} value={form.adminContact || ""} onChange={e => set("adminContact", e.target.value)} maxLength={50} /></div>
             </>
           )}
 
           <div>
-            <Label>Password * <span className="text-xs text-muted-foreground">(Min 12 chars, uppercase, lowercase, number, special)</span></Label>
+            <Label>{t("signup.password")} * <span className="text-xs text-muted-foreground">({t("signup.passwordHint")})</span></Label>
             <div className="relative">
               <Input type={showPw ? "text" : "password"} value={form.password || ""} onChange={e => set("password", e.target.value)} maxLength={128} />
               <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPw(!showPw)}>
@@ -232,14 +228,14 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
               </button>
             </div>
           </div>
-          <div><Label>Confirm Password *</Label><Input type="password" placeholder="Re-enter password" value={form.confirmPassword || ""} onChange={e => set("confirmPassword", e.target.value)} maxLength={128} /></div>
+          <div><Label>{t("signup.confirmPassword")} *</Label><Input type="password" placeholder={t("signup.confirmPassword")} value={form.confirmPassword || ""} onChange={e => set("confirmPassword", e.target.value)} maxLength={128} /></div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating Account..." : "Create Account"}</Button>
+          <Button type="submit" className="w-full" disabled={loading}>{loading ? t("signup.creating") : t("signup.createAccount")}</Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account? <button onClick={() => navigate(`/login/${role}`)} className="text-primary hover:underline font-medium">Sign In</button>
+          {t("signup.alreadyHave")} <button onClick={() => navigate(`/login/${role}`)} className="text-primary hover:underline font-medium">{t("nav.signin")}</button>
         </p>
       </motion.div>
     </div>

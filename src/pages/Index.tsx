@@ -48,18 +48,34 @@ const Index = () => {
               {t("hero.subtitle")}
             </motion.p>
 
-            <motion.div className="flex flex-wrap gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}>
+            <motion.div className="flex flex-wrap gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}>
               <Button
                 size="lg"
-                className="bg-white text-[hsl(203,79%,10%)] shadow-lg hover:shadow-xl font-semibold px-8 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-white/90"
-                onClick={() => navigate("/auth/select-role?mode=signup")}
+                className="bg-white text-[hsl(203,79%,10%)] shadow-lg hover:shadow-xl font-semibold px-6 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-white/90"
+                onClick={() => navigate("/signup?role=student")}
               >
-                <GraduationCap className="h-5 w-5" />{t("hero.cta.start")}
+                <GraduationCap className="h-5 w-5" />{t("hero.joinStudent")}
               </Button>
               <Button
                 size="lg"
-                variant="outline"
-                className="border-white/40 text-white hover:bg-white/10 font-semibold px-8 h-12 text-base hover:-translate-y-0.5 transition-all"
+                className="bg-white/15 backdrop-blur text-white border border-white/30 shadow-lg hover:shadow-xl font-semibold px-6 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-white/25"
+                onClick={() => navigate("/signup?role=hr")}
+              >
+                <Building2 className="h-5 w-5" />{t("hero.joinEmployer")}
+              </Button>
+              <Button
+                size="lg"
+                className="bg-white/15 backdrop-blur text-white border border-white/30 shadow-lg hover:shadow-xl font-semibold px-6 h-12 text-base hover:-translate-y-0.5 transition-all hover:bg-white/25"
+                onClick={() => navigate("/signup?role=university")}
+              >
+                <University className="h-5 w-5" />{t("hero.joinUniversity")}
+              </Button>
+            </motion.div>
+            <motion.div className="mt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+              <Button
+                size="lg"
+                variant="link"
+                className="text-white/80 hover:text-white font-medium px-0"
                 onClick={() => navigate("/leaderboard")}
               >
                 <Trophy className="h-5 w-5" />{t("hero.cta.rankings")}

@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { untypedTable } from "@/lib/untypedTable";
 import { Trophy, Users, TrendingUp, Building2, ShieldCheck, FileCheck, Award } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useI18n } from "@/lib/i18n";
 
 const PublicLeaderboard = () => {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<any[]>([]);
   const [uniStats, setUniStats] = useState<any[]>([]);
@@ -41,7 +43,6 @@ const PublicLeaderboard = () => {
       setMajors([...new Set(data.map((s: any) => s.major).filter(Boolean))]);
       setUnis([...new Set(data.map((s: any) => s.university).filter(Boolean))]);
 
-      // Badge map
       const bMap = new Map<string, any[]>();
       (badgesData || []).forEach((b: any) => {
         const arr = bMap.get(b.user_id) || [];
@@ -50,26 +51,22 @@ const PublicLeaderboard = () => {
       });
       setBadges(bMap);
 
-      // Verified certs count per user
       const vcMap = new Map<string, number>();
       (certsData || []).forEach((c: any) => {
         if (c.verified) vcMap.set(c.user_id, (vcMap.get(c.user_id) || 0) + 1);
       });
       setVerifiedCerts(vcMap);
 
-      // Verified projects count per user
       const vpMap = new Map<string, number>();
       (projectsData || []).forEach((p: any) => {
         if (p.verified) vpMap.set(p.user_id, (vpMap.get(p.user_id) || 0) + 1);
       });
       setVerifiedProjects(vpMap);
 
-      // Users with transcripts
       const tSet = new Set<string>();
-      (transcriptsData || []).forEach((t: any) => tSet.add(t.user_id));
+      (transcriptsData || []).forEach((tr: any) => tSet.add(tr.user_id));
       setVerifiedTranscripts(tSet);
 
-      // University aggregation
       const uniMap = new Map<string, { count: number; totalERS: number }>();
       data.forEach((s: any) => {
         const entry = uniMap.get(s.university) || { count: 0, totalERS: 0 };
@@ -94,7 +91,6 @@ const PublicLeaderboard = () => {
     return true;
   });
 
-  // Compute rankings by university and major
   const uniRankMap = new Map<string, number>();
   const majorRankMap = new Map<string, number>();
   const uniCounters = new Map<string, number>();
@@ -121,18 +117,18 @@ const PublicLeaderboard = () => {
     <div className="container max-w-4xl py-8 space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold font-heading">
-          <Trophy className="h-8 w-8 inline mr-2 text-[hsl(var(--gold))]" />
-          National Leaderboard
+          <Trophy className="h-8 w-8 inline ltr:mr-2 rtl:ml-2 text-[hsl(var(--gold))]" />
+          {t("leaderboard.heading")}
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">Top students ranked by Employability Readiness Score</p>
+        <p className="text-muted-foreground text-sm mt-1">{t("leaderboard.subtitle")}</p>
       </div>
 
       <div className="flex gap-2 justify-center">
         <Button size="sm" variant={tab === "students" ? "default" : "outline"} onClick={() => setTab("students")}>
-          <Users className="h-4 w-4 mr-1" />Students
+          <Users className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("leaderboard.students")}
         </Button>
         <Button size="sm" variant={tab === "universities" ? "default" : "outline"} onClick={() => setTab("universities")}>
-          <Building2 className="h-4 w-4 mr-1" />Universities
+          <Building2 className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("leaderboard.universities")}
         </Button>
       </div>
 
@@ -140,16 +136,16 @@ const PublicLeaderboard = () => {
         <>
           <div className="flex gap-3 justify-center flex-wrap">
             <Select value={filterUni} onValueChange={setFilterUni}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="University" /></SelectTrigger>
+              <SelectTrigger className="w-48"><SelectValue placeholder={t("leaderboard.allUnis")} /></SelectTrigger>
               <SelectContent className="max-h-60">
-                <SelectItem value="all">All Universities</SelectItem>
+                <SelectItem value="all">{t("leaderboard.allUnis")}</SelectItem>
                 {unis.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterMajor} onValueChange={setFilterMajor}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="Major" /></SelectTrigger>
+              <SelectTrigger className="w-48"><SelectValue placeholder={t("leaderboard.allMajors")} /></SelectTrigger>
               <SelectContent className="max-h-60">
-                <SelectItem value="all">All Majors</SelectItem>
+                <SelectItem value="all">{t("leaderboard.allMajors")}</SelectItem>
                 {majors.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -173,22 +169,21 @@ const PublicLeaderboard = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Link to={`/profile/${s.user_id}`} className="font-medium text-sm truncate hover:text-primary transition-colors">
-                        {(s as any).profiles?.full_name || "Student"}
+                        {(s as any).profiles?.full_name || t("role.student")}
                       </Link>
-                      {/* Verification badges */}
                       {certCount > 0 && (
                         <Badge variant="outline" className="text-[10px] bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/30 gap-0.5">
-                          <ShieldCheck className="h-3 w-3" />{certCount} Cert{certCount > 1 ? "s" : ""}
+                          <ShieldCheck className="h-3 w-3" />{certCount}
                         </Badge>
                       )}
                       {hasTranscript && (
                         <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30 gap-0.5">
-                          <FileCheck className="h-3 w-3" />Transcript
+                          <FileCheck className="h-3 w-3" />
                         </Badge>
                       )}
                       {projCount > 0 && (
                         <Badge variant="outline" className="text-[10px] bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/30 gap-0.5">
-                          <Award className="h-3 w-3" />{projCount} Proj
+                          <Award className="h-3 w-3" />{projCount}
                         </Badge>
                       )}
                       {sBadges.slice(0, 2).map(b => (
@@ -197,8 +192,8 @@ const PublicLeaderboard = () => {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {s.university} · {s.major}
-                      {uniRank && <span className="ml-2 text-primary">Uni #{uniRank}</span>}
-                      {majorRank && <span className="ml-2 text-[hsl(var(--gold))]">Major #{majorRank}</span>}
+                      {uniRank && <span className="ltr:ml-2 rtl:mr-2 text-primary">Uni #{uniRank}</span>}
+                      {majorRank && <span className="ltr:ml-2 rtl:mr-2 text-[hsl(var(--gold))]">Major #{majorRank}</span>}
                     </p>
                   </div>
                   <div className="text-right">
@@ -208,7 +203,7 @@ const PublicLeaderboard = () => {
                 </motion.div>
               );
             })}
-            {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No students found.</p>}
+            {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">{t("leaderboard.noStudents")}</p>}
           </div>
         </>
       )}
@@ -223,11 +218,11 @@ const PublicLeaderboard = () => {
               </span>
               <div className="flex-1">
                 <p className="font-medium text-sm">{u.name}</p>
-                <p className="text-xs text-muted-foreground">{u.count} students</p>
+                <p className="text-xs text-muted-foreground">{u.count} {t("leaderboard.studentsCount")}</p>
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold text-primary">{u.avgERS}</p>
-                <p className="text-[10px] text-muted-foreground">Avg ERS</p>
+                <p className="text-[10px] text-muted-foreground">{t("leaderboard.avgERS")}</p>
               </div>
             </motion.div>
           ))}
@@ -235,7 +230,7 @@ const PublicLeaderboard = () => {
       )}
 
       <div className="text-center py-4">
-        <p className="text-xs text-muted-foreground">Powered by HireQimah · Updated in real-time · Rankings include Global, University, and Major positions</p>
+        <p className="text-xs text-muted-foreground">{t("leaderboard.footer")}</p>
       </div>
     </div>
   );
