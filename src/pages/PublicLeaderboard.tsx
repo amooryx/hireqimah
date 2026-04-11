@@ -20,6 +20,7 @@ const PublicLeaderboard = () => {
   const [tab, setTab] = useState<"students" | "universities">("students");
   const [filterMajor, setFilterMajor] = useState("all");
   const [filterUni, setFilterUni] = useState("all");
+  const [filterRegion, setFilterRegion] = useState("all");
   const [verifiedCerts, setVerifiedCerts] = useState<Map<string, number>>(new Map());
   const [verifiedProjects, setVerifiedProjects] = useState<Map<string, number>>(new Map());
   const [verifiedTranscripts, setVerifiedTranscripts] = useState<Set<string>>(new Set());
