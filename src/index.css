@@ -7,85 +7,85 @@
 @layer base {
   :root {
     --background: 210 20% 98%;
-    --foreground: 203 79% 15%;
+    --foreground: 210 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 203 79% 15%;
+    --card-foreground: 210 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 203 79% 15%;
+    --popover-foreground: 210 25% 12%;
 
-    --primary: 217 82% 50%;
+    --primary: 215 80% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 203 79% 20%;
+    --secondary: 210 45% 20%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 210 14% 93%;
-    --muted-foreground: 210 9% 46%;
+    --muted-foreground: 210 10% 46%;
 
-    --accent: 207 89% 94%;
-    --accent-foreground: 203 79% 20%;
+    --accent: 210 50% 95%;
+    --accent-foreground: 210 45% 20%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 13% 89%;
-    --input: 210 13% 89%;
-    --ring: 217 82% 50%;
+    --border: 210 16% 88%;
+    --input: 210 16% 88%;
+    --ring: 215 80% 48%;
 
     --radius: 0.5rem;
 
-    --navy: 203 79% 20%;
+    --navy: 210 45% 16%;
     --navy-foreground: 0 0% 100%;
-    --light-blue: 207 89% 94%;
-    --success: 142 71% 45%;
+    --light-blue: 210 60% 95%;
+    --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
 
-    --deep-green: 160 84% 20%;
+    --deep-green: 160 70% 22%;
     --deep-green-foreground: 0 0% 100%;
 
-    --sidebar-background: 203 79% 15%;
+    --sidebar-background: 210 45% 12%;
     --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 217 82% 50%;
+    --sidebar-primary: 215 80% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 203 79% 22%;
+    --sidebar-accent: 210 45% 18%;
     --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 203 50% 24%;
-    --sidebar-ring: 217 82% 50%;
+    --sidebar-border: 210 30% 22%;
+    --sidebar-ring: 215 80% 48%;
 
     --font-heading: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
     --font-body: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
   }
 
   .dark {
-    --background: 203 79% 8%;
-    --foreground: 210 20% 95%;
-    --card: 203 79% 12%;
-    --card-foreground: 210 20% 95%;
-    --popover: 203 79% 12%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 217 82% 55%;
+    --background: 210 30% 7%;
+    --foreground: 210 15% 93%;
+    --card: 210 30% 11%;
+    --card-foreground: 210 15% 93%;
+    --popover: 210 30% 11%;
+    --popover-foreground: 210 15% 93%;
+    --primary: 215 80% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 203 79% 25%;
+    --secondary: 210 35% 24%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 203 30% 20%;
-    --muted-foreground: 210 14% 65%;
-    --accent: 207 60% 25%;
-    --accent-foreground: 207 89% 94%;
+    --muted: 210 25% 18%;
+    --muted-foreground: 210 12% 62%;
+    --accent: 210 40% 20%;
+    --accent-foreground: 210 60% 90%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
-    --border: 203 30% 22%;
-    --input: 203 30% 22%;
-    --ring: 217 82% 55%;
-    --sidebar-background: 203 79% 6%;
-    --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 217 82% 55%;
+    --border: 210 25% 20%;
+    --input: 210 25% 20%;
+    --ring: 215 80% 55%;
+    --sidebar-background: 210 35% 6%;
+    --sidebar-foreground: 210 15% 90%;
+    --sidebar-primary: 215 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 203 79% 14%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 203 30% 16%;
-    --sidebar-ring: 217 82% 55%;
+    --sidebar-accent: 210 35% 14%;
+    --sidebar-accent-foreground: 210 15% 90%;
+    --sidebar-border: 210 25% 16%;
+    --sidebar-ring: 215 80% 55%;
   }
 }
 
@@ -94,11 +94,14 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    letter-spacing: -0.01em;
   }
   /* RTL spacing fix for icons in buttons */
   [dir="rtl"] .gap-2 > svg + span,
@@ -112,9 +115,21 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
   }
   .glass-card {
-    @apply bg-card/80 backdrop-blur-lg border border-border/50 shadow-sm;
+    @apply bg-card/90 backdrop-blur-sm border border-border shadow-sm;
   }
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(203 79% 15%) 0%, hsl(203 79% 22%) 50%, hsl(217 60% 30%) 100%);
+    background: linear-gradient(160deg, hsl(210 45% 12%) 0%, hsl(210 45% 18%) 50%, hsl(215 50% 28%) 100%);
+  }
+  /* Government-grade section separator */
+  .section-divider {
+    @apply border-t border-border;
+  }
+  /* Institutional card style */
+  .gov-card {
+    @apply rounded-lg border bg-card p-6 shadow-sm;
+  }
+  /* Dashboard header */
+  .dash-header {
+    @apply pb-4 border-b border-border mb-6;
   }
 }

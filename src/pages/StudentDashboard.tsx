@@ -248,12 +248,12 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
               <ERSGauge score={ers.total} size={180} />
               {myRank > 0 && <p className="mt-2 text-sm text-muted-foreground">Rank #{myRank}</p>}
               {ers.breakdown.synergyBonus > 0 && (
-                <Badge className="mt-2 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]">
+                <Badge className="mt-2 bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
                   <Star className="h-3 w-3 mr-1" />+{ers.breakdown.synergyBonus}% Synergy
                 </Badge>
               )}
               {ers.breakdown.nationalReadiness > 0 && (
-                <Badge className="mt-1 bg-[hsl(var(--gold))]/20 text-[hsl(var(--gold))] shadow-[0_0_8px_hsl(var(--gold)/0.3)]">
+                <Badge className="mt-1 bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] shadow-[0_0_8px_hsl(var(--gold)/0.3)]">
                   <Star className="h-3 w-3 mr-1" />+{ers.breakdown.nationalReadiness}% National
                 </Badge>
               )}
@@ -298,7 +298,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                     { label: "Certifications", value: ers.breakdown.certification || 0, weight: ers.explanation?.weights?.cert ? `${Math.round(ers.explanation.weights.cert * 100)}%` : "25%", color: "bg-[hsl(var(--success))]" },
                     { label: "Projects", value: ers.breakdown.project || 0, weight: ers.explanation?.weights?.project ? `${Math.round(ers.explanation.weights.project * 100)}%` : "15%", color: "bg-secondary" },
                     { label: "Soft Skills", value: ers.breakdown.softSkills || 0, weight: ers.explanation?.weights?.soft ? `${Math.round(ers.explanation.weights.soft * 100)}%` : "10%", color: "bg-accent-foreground" },
-                    { label: "Conduct & Attendance", value: ers.breakdown.conduct || 0, weight: ers.explanation?.weights?.conduct ? `${Math.round(ers.explanation.weights.conduct * 100)}%` : "10%", color: "bg-[hsl(var(--gold))]" },
+                    { label: "Conduct & Attendance", value: ers.breakdown.conduct || 0, weight: ers.explanation?.weights?.conduct ? `${Math.round(ers.explanation.weights.conduct * 100)}%` : "10%", color: "bg-[hsl(var(--primary))]" },
                   ].map(item => (
                     <div key={item.label}>
                       <div className="flex justify-between text-sm mb-1">
@@ -331,7 +331,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                         {c.certification_catalog?.name || c.custom_name || "Certificate"}
                         {c.verified && <CheckCircle className="h-3 w-3 ml-1 text-[hsl(var(--success))]" />}
                         {c.certification_catalog?.is_hadaf_reimbursed && (
-                          <span className="ml-1 text-[10px] text-[hsl(var(--gold))]">🇸🇦 Hadaf</span>
+                          <span className="ml-1 text-[10px] text-[hsl(var(--primary))]">🇸🇦 Hadaf</span>
                         )}
                       </Badge>
                     ))}
@@ -538,7 +538,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                     <div className={`h-3 w-3 rounded-full ${
                       s.proficiency_level === "expert" ? "bg-[hsl(var(--success))]" :
                       s.proficiency_level === "advanced" ? "bg-primary" :
-                      s.proficiency_level === "intermediate" ? "bg-[hsl(var(--gold))]" :
+                      s.proficiency_level === "intermediate" ? "bg-[hsl(var(--primary))]" :
                       "bg-muted-foreground"
                     }`} />
                     <div className="flex-1">

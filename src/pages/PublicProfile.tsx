@@ -152,7 +152,7 @@ const PublicProfile = () => {
               </div>
             )}
             {(ers?.national_readiness_bonus || 0) > 0 && (
-              <div className="flex justify-between text-sm text-[hsl(var(--gold))]">
+              <div className="flex justify-between text-sm text-[hsl(var(--primary))]">
                 <span>National Readiness</span><span>+{ers.national_readiness_bonus}%</span>
               </div>
             )}
@@ -185,7 +185,7 @@ const PublicProfile = () => {
                 <Award className="h-3 w-3 mr-1" />
                 {c.certification_catalog?.name || c.custom_name || "Certificate"}
                 {c.verified && <CheckCircle className="h-3 w-3 ml-1 text-[hsl(var(--success))]" />}
-                {c.certification_catalog?.is_hadaf_reimbursed && <span className="ml-1 text-[10px] text-[hsl(var(--gold))]">🇸🇦</span>}
+                {c.certification_catalog?.is_hadaf_reimbursed && <span className="ml-1 text-[10px] text-[hsl(var(--primary))]">🇸🇦</span>}
               </Badge>
             ))}
           </div>

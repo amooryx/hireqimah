@@ -29,7 +29,7 @@ const LeaderboardStudentRow = ({ student, rank, index, certCount, projCount, has
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.02 }}
     >
-      <span className={`w-8 text-center font-bold text-lg ${rank <= 3 ? "text-[hsl(var(--gold))]" : "text-muted-foreground"}`}>
+      <span className={`w-8 text-center font-bold text-lg ${rank <= 3 ? "text-[hsl(var(--primary))]" : "text-muted-foreground"}`}>
         {medal}
       </span>
       <div className="flex-1 min-w-0">
@@ -56,7 +56,7 @@ const LeaderboardStudentRow = ({ student, rank, index, certCount, projCount, has
             </Badge>
           )}
           {projCount > 0 && (
-            <Badge variant="outline" className="text-[10px] bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/30 gap-0.5">
+            <Badge variant="outline" className="text-[10px] bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/30 gap-0.5">
               <Award className="h-3 w-3" />{projCount}
             </Badge>
           )}

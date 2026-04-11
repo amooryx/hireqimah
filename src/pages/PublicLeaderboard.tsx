@@ -143,7 +143,7 @@ const PublicLeaderboard = () => {
     <div className="container max-w-4xl py-8 space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold font-heading">
-          <Trophy className="h-8 w-8 inline ltr:mr-2 rtl:ml-2 text-[hsl(var(--gold))]" />
+          <Trophy className="h-8 w-8 inline ltr:mr-2 rtl:ml-2 text-[hsl(var(--primary))]" />
           {t("leaderboard.heading")}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">{t("leaderboard.subtitle")}</p>

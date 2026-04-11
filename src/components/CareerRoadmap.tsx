@@ -30,7 +30,7 @@ function TrendIcon({ value }: { value: number }) {
 function StabilityBadge({ stability }: { stability: string }) {
   const colors: Record<string, string> = {
     high_growth: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
-    stable: "bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]",
+    stable: "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]",
     declining: "bg-destructive/10 text-destructive",
   };
   return (
@@ -251,7 +251,7 @@ export default function CareerRoadmap({ userId, currentCareerTarget }: CareerRoa
             <div className="rounded-xl border bg-card p-6 text-center">
               <Badge className={`text-sm ${
                 roadmap.market_demand === "high" ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]" :
-                roadmap.market_demand === "medium" ? "bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]" :
+                roadmap.market_demand === "medium" ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]" :
                 "bg-destructive/10 text-destructive"
               }`}>
                 {(roadmap.market_demand || "unknown").toUpperCase()}

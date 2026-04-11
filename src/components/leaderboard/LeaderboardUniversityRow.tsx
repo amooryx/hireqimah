@@ -18,7 +18,7 @@ const LeaderboardUniversityRow = ({ uni, rank, index }: Props) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
     >
-      <span className={`w-8 text-center font-bold text-lg ${rank <= 3 ? "text-[hsl(var(--gold))]" : "text-muted-foreground"}`}>
+      <span className={`w-8 text-center font-bold text-lg ${rank <= 3 ? "text-[hsl(var(--primary))]" : "text-muted-foreground"}`}>
         {medal}
       </span>
       <div className="flex-1">

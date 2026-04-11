@@ -131,7 +131,7 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
   if (success) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <motion.div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-lg text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+        <motion.div className="w-full max-w-md rounded-lg border bg-card p-8 shadow-lg text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10 mb-4">
             <GraduationCap className="h-8 w-8 text-success" />
           </div>
@@ -147,7 +147,7 @@ const SignUp = ({ currentUser, onLogout }: SignUpProps) => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <motion.div className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <motion.div className="w-full max-w-lg rounded-lg border bg-card p-8 shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div className="text-center mb-6">
           <img src={logo} alt="HireQimah" className="mx-auto h-14 mb-4" />
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-3">

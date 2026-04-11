@@ -72,44 +72,44 @@ const RoleLogin = ({ role, onLogin }: { role: LoginRole; onLogin: () => void }) 
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <motion.div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="text-center mb-6">
-          <img src={logo} alt="HireQimah" className="mx-auto h-14 mb-4" />
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-3">
-            <meta.icon className="h-7 w-7 text-primary" />
+      <motion.div className="w-full max-w-md rounded-lg border bg-card p-7 shadow-sm" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <div className="text-center mb-5">
+          <img src={logo} alt="HireQimah" className="mx-auto h-10 mb-4" />
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-md bg-primary/8 mb-3">
+            <meta.icon className="h-5 w-5 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold font-heading">{t("login.signInAs")} {meta.label}</h1>
-          <p className="text-sm text-muted-foreground">{meta.desc}</p>
+          <h1 className="text-lg font-bold font-heading">{t("login.signInAs")} {meta.label}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{meta.desc}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <Label htmlFor="email">{t("login.email")}</Label>
-            <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} />
+            <Label htmlFor="email" className="text-xs">{t("login.email")}</Label>
+            <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} maxLength={255} className="h-9 text-sm" />
           </div>
           <div>
-            <Label htmlFor="password">{t("login.password")}</Label>
+            <Label htmlFor="password" className="text-xs">{t("login.password")}</Label>
             <div className="relative">
-              <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} maxLength={128} />
-              <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} maxLength={128} className="h-9 text-sm" />
+              <button type="button" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-xs text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-9 text-sm" disabled={loading}>
             {loading ? t("login.signingIn") : `${t("login.signInAs")} ${meta.label}`}
           </Button>
         </form>
 
-        <div className="mt-4 space-y-2 text-center text-sm">
-          <button onClick={() => navigate("/forgot-password")} className="text-primary hover:underline font-medium">
+        <div className="mt-4 space-y-2 text-center">
+          <button onClick={() => navigate("/forgot-password")} className="text-xs text-primary hover:underline font-medium">
             {t("login.forgotPassword")}
           </button>
           {role !== "admin" && (
-            <p className="text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {t("login.noAccount")}{" "}
               <button onClick={() => navigate(`/signup?role=${role}`)} className="text-primary hover:underline font-medium">
                 {t("nav.signup")}
@@ -118,10 +118,10 @@ const RoleLogin = ({ role, onLogin }: { role: LoginRole; onLogin: () => void }) 
           )}
           {otherLinks[role].length > 0 && (
             <div className="pt-2 border-t mt-3">
-              <p className="text-xs text-muted-foreground mb-1">{t("login.otherPortals")}</p>
+              <p className="text-[11px] text-muted-foreground mb-1">{t("login.otherPortals")}</p>
               <div className="flex justify-center gap-3">
                 {otherLinks[role].map(link => (
-                  <button key={link.path} onClick={() => navigate(link.path)} className="text-xs text-primary hover:underline">
+                  <button key={link.path} onClick={() => navigate(link.path)} className="text-[11px] text-primary hover:underline">
                     {link.label}
                   </button>
                 ))}

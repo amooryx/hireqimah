@@ -168,7 +168,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
   const STAGE_COLORS: Record<string, string> = {
     discovered: "bg-muted text-muted-foreground",
     shortlisted: "bg-primary/10 text-primary",
-    interview: "bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]",
+    interview: "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]",
     offer: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
     hired: "bg-[hsl(var(--deep-green))]/10 text-[hsl(var(--deep-green))]",
   };
@@ -408,7 +408,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                   return (
                     <div key={stage}>
                       <h4 className="text-sm font-semibold capitalize mb-2 flex items-center gap-2">
-                        <span className={`inline-block w-2 h-2 rounded-full ${stage === 'hired' ? 'bg-[hsl(var(--deep-green))]' : stage === 'offer' ? 'bg-[hsl(var(--success))]' : stage === 'interview' ? 'bg-[hsl(var(--gold))]' : 'bg-primary'}`} />
+                        <span className={`inline-block w-2 h-2 rounded-full ${stage === 'hired' ? 'bg-[hsl(var(--deep-green))]' : stage === 'offer' ? 'bg-[hsl(var(--success))]' : stage === 'interview' ? 'bg-[hsl(var(--primary))]' : 'bg-primary'}`} />
                         {stage} ({stageEntries.length})
                       </h4>
                       {stageEntries.map((entry: any) => {
