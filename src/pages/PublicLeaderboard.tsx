@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Users, TrendingUp, Building2, ShieldCheck, FileCheck, Award, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/lib/i18n";
-import { SAUDI_UNIVERSITIES, COMMON_MAJORS } from "@/lib/leaderboardConstants";
+import { SAUDI_UNIVERSITIES, COMMON_MAJORS, SAUDI_REGIONS, UNIVERSITY_REGION_MAP } from "@/lib/leaderboardConstants";
 import LeaderboardStudentRow from "@/components/leaderboard/LeaderboardStudentRow";
 import LeaderboardUniversityRow from "@/components/leaderboard/LeaderboardUniversityRow";
 import LeaderboardMotivation from "@/components/leaderboard/LeaderboardMotivation";
