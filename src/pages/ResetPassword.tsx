@@ -58,7 +58,7 @@ const ResetPassword = () => {
   if (success) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <motion.div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-lg text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+        <motion.div className="w-full max-w-md rounded-lg border bg-card p-8 shadow-lg text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <KeyRound className="h-10 w-10 text-primary mx-auto mb-4" />
           <h2 className="text-xl font-bold font-heading mb-2">Password Updated</h2>
           <p className="text-sm text-muted-foreground mb-6">Your password has been successfully changed.</p>
@@ -70,7 +70,7 @@ const ResetPassword = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <motion.div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div className="w-full max-w-md rounded-lg border bg-card p-8 shadow-lg" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
         <div className="text-center mb-6">
           <img src={logo} alt="HireQimah" className="mx-auto h-14 mb-4" />
           <h1 className="text-2xl font-bold font-heading">Set New Password</h1>
