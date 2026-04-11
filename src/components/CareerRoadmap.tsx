@@ -76,17 +76,29 @@ export default function CareerRoadmap({ userId, currentCareerTarget }: CareerRoa
     setRoadmap(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("career-roadmap", {
-        body: { career_target: finalTarget },
-      });
-      if (error) throw error;
-      if (data?.roadmap) {
-        setRoadmap(data.roadmap);
-        setJobsAnalyzed(data.jobs_analyzed || 0);
-        setConfidence(data.confidence || data.roadmap?.confidence || null);
-      } else {
-        throw new Error("No roadmap generated");
+      // Fetch user's current skills and certs for gap analysis
+      const [{ data: userSkills }, { data: userCerts }] = await Promise.all([
+        supabase.from("skill_matrix").select("skill_name").eq("user_id", userId),
+        supabase.from("student_certifications").select("custom_name, certification_catalog(name)").eq("user_id", userId),
+      ]);
+
+      const skillNames = (userSkills || []).map((s: any) => s.skill_name);
+      const certNames = (userCerts || []).map((c: any) => c.certification_catalog?.name || c.custom_name).filter(Boolean);
+
+      const path = findCareerPath(finalTarget);
+      if (!path) {
+        toast({ title: "Career path not found", description: `"${finalTarget}" is not in our database yet. Try a different career target.`, variant: "destructive" });
+        setLoading(false);
+        return;
       }
+
+      // Small delay for UX feel
+      await new Promise(r => setTimeout(r, 800));
+
+      const result = generateRoadmapFromPath(path, skillNames, certNames);
+      setRoadmap(result);
+      setJobsAnalyzed(result.confidence?.jobs_count || 0);
+      setConfidence(result.confidence || null);
     } catch (err: any) {
       toast({ title: "Roadmap generation failed", description: err.message, variant: "destructive" });
     } finally {
