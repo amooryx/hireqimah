@@ -97,6 +97,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "leaderboard.universities": { en: "Universities", ar: "الجامعات" },
   "leaderboard.allUnis": { en: "All Universities", ar: "جميع الجامعات" },
   "leaderboard.allMajors": { en: "All Majors", ar: "جميع التخصصات" },
+  "leaderboard.allRegions": { en: "All Regions", ar: "جميع المناطق" },
   "leaderboard.noStudents": { en: "No students found.", ar: "لا يوجد طلاب." },
   "leaderboard.studentsCount": { en: "students", ar: "طالب" },
   "leaderboard.avgERS": { en: "Avg ERS", ar: "متوسط ERS" },
