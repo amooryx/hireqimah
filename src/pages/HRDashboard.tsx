@@ -307,6 +307,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
     if (searchQuery && !s.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (minERS && (s.ers_score || 0) < parseInt(minERS)) return false;
     if (filterMajor !== "all" && s.major !== filterMajor) return false;
+    if (filterUni !== "all" && s.university !== filterUni) return false;
     if (filterCert !== "all") {
       const hasCert = studentCerts.some(sc => sc.user_id === s.user_id && (sc as any).certification_catalog?.name === filterCert);
       if (!hasCert) return false;
