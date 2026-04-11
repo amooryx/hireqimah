@@ -168,11 +168,21 @@ const PublicLeaderboard = () => {
         <>
           {/* Filters */}
           <div className="flex gap-3 justify-center flex-wrap">
+            <Select value={filterRegion} onValueChange={v => { setFilterRegion(v); if (v !== "all") setFilterUni("all"); }}>
+              <SelectTrigger className="w-44"><SelectValue placeholder={t("leaderboard.allRegions")} /></SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="all">{t("leaderboard.allRegions")}</SelectItem>
+                {SAUDI_REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={filterUni} onValueChange={setFilterUni}>
               <SelectTrigger className="w-56"><SelectValue placeholder={t("leaderboard.allUnis")} /></SelectTrigger>
               <SelectContent className="max-h-60">
                 <SelectItem value="all">{t("leaderboard.allUnis")}</SelectItem>
-                {SAUDI_UNIVERSITIES.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                {(filterRegion !== "all"
+                  ? SAUDI_UNIVERSITIES.filter(u => UNIVERSITY_REGION_MAP[u] === filterRegion)
+                  : SAUDI_UNIVERSITIES
+                ).map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterMajor} onValueChange={setFilterMajor}>
