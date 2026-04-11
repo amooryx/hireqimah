@@ -13,9 +13,10 @@ import ERSGauge from "@/components/ERSGauge";
 import { supabase } from "@/integrations/supabase/client";
 import { untypedTable } from "@/lib/untypedTable";
 import type { AuthUser } from "@/lib/supabaseAuth";
+import { SAUDI_UNIVERSITIES } from "@/lib/leaderboardConstants";
 import {
   Search, Users, BarChart3, Star, Award, Eye, TrendingUp, Briefcase,
-  CheckCircle, X, Info, ShieldCheck, MessageSquare, Calendar, Bell, Send, Target
+  CheckCircle, X, Info, ShieldCheck, MessageSquare, Calendar, Bell, Send, Target, Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
