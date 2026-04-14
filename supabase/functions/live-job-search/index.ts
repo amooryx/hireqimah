@@ -19,6 +19,62 @@ function normalize(items: string[]): string[] {
     });
 }
 
+function inferSource(url?: string): string | undefined {
+  if (!url) return undefined;
+
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (host.includes("linkedin")) return "LinkedIn";
+    if (host.includes("indeed")) return "Indeed";
+    if (host.includes("glassdoor")) return "Glassdoor";
+    if (host.includes("bayt")) return "Bayt";
+    return host.replace(/^www\./, "");
+  } catch {
+    return undefined;
+  }
+}
+
+function buildJobPostingResults(
+  jobs: Array<{
+    title: string;
+    text: string;
+    company?: string;
+    url?: string;
+    location?: string;
+    sector?: string;
+    source?: string;
+    required_skills?: string[];
+    required_certifications?: string[];
+  }>
+) {
+  const deduped = new Map<string, any>();
+
+  jobs.forEach((job, index) => {
+    const title = job.title?.trim();
+    const sourceUrl = job.url?.trim();
+
+    if (!title || !sourceUrl) return;
+
+    const key = `${sourceUrl}|${title.toLowerCase()}`;
+    if (deduped.has(key)) return;
+
+    deduped.set(key, {
+      id: `live-${index}`,
+      title,
+      company: job.company || null,
+      location: job.location || null,
+      sector: job.sector || null,
+      source: job.source || inferSource(sourceUrl) || null,
+      source_url: sourceUrl,
+      description: job.text?.slice(0, 600) || null,
+      required_skills: normalize(job.required_skills || []),
+      required_certifications: normalize(job.required_certifications || []),
+    });
+  });
+
+  return Array.from(deduped.values()).slice(0, 25);
+}
+
 /** Extract skills & certs from job text via AI */
 async function extractFromText(
   title: string,
@@ -123,7 +179,17 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const searchQuery = `${role.trim()} jobs Saudi Arabia hiring requirements skills`;
-    let jobTexts: { title: string; text: string; company?: string; url?: string }[] = [];
+    let jobTexts: {
+      title: string;
+      text: string;
+      company?: string;
+      url?: string;
+      location?: string;
+      sector?: string;
+      source?: string;
+      required_skills?: string[];
+      required_certifications?: string[];
+    }[] = [];
     let source = "firecrawl";
 
     // ── Step 1: Try Firecrawl web search ──
@@ -155,6 +221,7 @@ serve(async (req) => {
                 title: r.title || role.trim(),
                 text: text.slice(0, 3000),
                 url: r.url,
+                source: inferSource(r.url),
               });
             }
           }
@@ -192,6 +259,7 @@ serve(async (req) => {
                   title: r.title || role.trim(),
                   text: text.slice(0, 3000),
                   url: r.url,
+                  source: inferSource(r.url),
                 });
               }
             }
@@ -207,7 +275,7 @@ serve(async (req) => {
       console.log("Firecrawl insufficient, checking DB...");
       const { data: dbJobs } = await supabase
         .from("job_market_data")
-        .select("title, description, extracted_skills, extracted_certifications, company")
+        .select("title, description, extracted_skills, extracted_certifications, company, source_url, location, sector, source")
         .ilike("title", `%${role.trim()}%`)
         .gte("scraped_at", new Date(Date.now() - 30 * 86400000).toISOString())
         .limit(50);
@@ -217,7 +285,17 @@ serve(async (req) => {
         // For DB jobs with pre-extracted data, add them directly
         for (const j of dbJobs) {
           if (j.description && j.description.length > 50) {
-            jobTexts.push({ title: j.title, text: j.description, company: j.company || undefined });
+            jobTexts.push({
+              title: j.title,
+              text: j.description,
+              company: j.company || undefined,
+              url: j.source_url || undefined,
+              location: j.location || undefined,
+              sector: j.sector || undefined,
+              source: j.source || inferSource(j.source_url || undefined),
+              required_skills: j.extracted_skills || [],
+              required_certifications: j.extracted_certifications || [],
+            });
           }
         }
       }
@@ -234,7 +312,7 @@ serve(async (req) => {
           const topRole = similar[0].role_title;
           const { data: simJobs } = await supabase
             .from("job_market_data")
-            .select("title, description, extracted_skills, extracted_certifications, company")
+              .select("title, description, extracted_skills, extracted_certifications, company, source_url, location, sector, source")
             .ilike("title", `%${topRole}%`)
             .limit(30);
 
@@ -242,7 +320,17 @@ serve(async (req) => {
             source = jobTexts.length > 0 ? source + "+similar" : "database-similar";
             for (const j of simJobs) {
               if (j.description && j.description.length > 50) {
-                jobTexts.push({ title: j.title, text: j.description, company: j.company || undefined });
+                jobTexts.push({
+                  title: j.title,
+                  text: j.description,
+                  company: j.company || undefined,
+                  url: j.source_url || undefined,
+                  location: j.location || undefined,
+                  sector: j.sector || undefined,
+                  source: j.source || inferSource(j.source_url || undefined),
+                  required_skills: j.extracted_skills || [],
+                  required_certifications: j.extracted_certifications || [],
+                });
               }
             }
           }
@@ -259,6 +347,7 @@ serve(async (req) => {
           message: `No job data found for "${role.trim()}". Try a different role.`,
           skills: [],
           certifications: [],
+          job_postings: [],
           source: "none",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -337,6 +426,7 @@ serve(async (req) => {
                 frequency: Math.max(totalPseudo - i * 3, 1),
                 percentage: Math.round((Math.max(totalPseudo - i * 3, 1) / totalPseudo) * 100),
               })),
+              job_postings: [],
               companies: [],
               sectors: [],
             }),
@@ -348,9 +438,28 @@ serve(async (req) => {
 
     // ── Step 4: Extract skills/certs from collected job texts via AI ──
     if (!lovableKey) {
+      const liveJobPostings = buildJobPostingResults(jobTexts);
+      const companies = Array.from(new Set(jobTexts.map((job) => job.company).filter(Boolean))).slice(0, 15);
+      const sectors = Array.from(new Set(jobTexts.map((job) => job.sector).filter(Boolean))).slice(0, 15);
+
       return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          match_type: liveJobPostings.length > 0 ? "live" : "none",
+          searched_role: role.trim(),
+          job_count: liveJobPostings.length,
+          source,
+          skills: [],
+          certifications: [],
+          job_postings: liveJobPostings,
+          companies,
+          sectors,
+          student_gaps: [],
+          message:
+            liveJobPostings.length > 0
+              ? `Live job postings found for "${role.trim()}". Skills analysis is temporarily unavailable.`
+              : `No data found for "${role.trim()}".`,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -408,6 +517,8 @@ serve(async (req) => {
       .sort((a, b) => b.frequency - a.frequency)
       .slice(0, 15);
 
+    const liveJobPostings = buildJobPostingResults(jobTexts);
+
     // ── Step 5: Get student gaps if user_id provided ──
     let studentGaps: any[] = [];
     if (user_id) {
@@ -420,17 +531,18 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        match_type: topSkills.length > 0 ? "live" : "none",
+        match_type: topSkills.length > 0 || liveJobPostings.length > 0 ? "live" : "none",
         searched_role: role.trim(),
         job_count: totalJobs,
         source,
         skills: topSkills,
         certifications: topCerts,
+        job_postings: liveJobPostings,
         companies: Array.from(companies).slice(0, 15),
         sectors: [],
         student_gaps: studentGaps,
         message:
-          topSkills.length > 0
+          topSkills.length > 0 || liveJobPostings.length > 0
             ? `Live market data from ${totalJobs} sources for "${role.trim()}".`
             : `No data found for "${role.trim()}".`,
       }),

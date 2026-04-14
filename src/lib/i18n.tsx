@@ -571,6 +571,135 @@ const translations: Record<string, Record<Lang, string>> = {
   "dash.statusAccepted": { en: "Accepted", ar: "مقبول" },
   "dash.statusDeclined": { en: "Declined", ar: "مرفوض" },
   "dash.statusApplied": { en: "Applied", ar: "تم التقديم" },
+  "dash.githubProfile": { en: "GitHub Profile", ar: "ملف GitHub" },
+  "dash.linkedinProfile": { en: "LinkedIn Profile", ar: "ملف LinkedIn" },
+  "dash.portfolioLink": { en: "Portfolio", ar: "معرض الأعمال" },
+  "dash.jobsDescription": {
+    en: "Internal and live external jobs ranked for your major, target role, and skills.",
+    ar: "وظائف داخلية وخارجية مباشرة مرتبة وفق تخصصك، ومسارك المستهدف، ومهاراتك.",
+  },
+  "dash.jobsSearchRole": {
+    en: "Matching opportunities for {role}",
+    ar: "فرص متوافقة مع {role}",
+  },
+  "dash.liveJobsSource": { en: "Live external jobs", ar: "وظائف خارجية مباشرة" },
+  "dash.cachedJobsSource": { en: "Cached market jobs", ar: "وظائف سوق محفوظة" },
+  "dash.cachedJobsNotice": {
+    en: "Live sources were temporarily unavailable, so cached market jobs are shown without breaking the dashboard.",
+    ar: "تعذر الوصول المؤقت إلى المصادر المباشرة، لذلك يتم عرض وظائف السوق المحفوظة دون التأثير على اللوحة.",
+  },
+  "dash.jobsUnavailableDescription": {
+    en: "External sources are currently unavailable. Internal HR jobs are still available below.",
+    ar: "المصادر الخارجية غير متاحة حالياً، لكن الوظائف الداخلية من جهات التوظيف ما زالت متاحة أدناه.",
+  },
+  "dash.noJobsDescription": {
+    en: "No matching internal or external jobs were found for your current profile yet.",
+    ar: "لم يتم العثور بعد على وظائف داخلية أو خارجية متوافقة مع ملفك الحالي.",
+  },
+  "dash.skillLevelExpert": { en: "Expert", ar: "خبير" },
+  "dash.skillLevelAdvanced": { en: "Advanced", ar: "متقدم" },
+  "dash.skillLevelIntermediate": { en: "Intermediate", ar: "متوسط" },
+  "dash.skillLevelBeginner": { en: "Beginner", ar: "مبتدئ" },
+  "dash.skillSourceTranscript": { en: "Transcript", ar: "السجل الأكاديمي" },
+  "dash.skillSourceCertificate": { en: "Certification", ar: "شهادة" },
+  "dash.skillSourceProject": { en: "Project", ar: "مشروع" },
+  "dash.skillSourceManual": { en: "Manual entry", ar: "إدخال يدوي" },
+  "dash.skillSourceSelfReported": { en: "Self reported", ar: "إدخال شخصي" },
+  "dash.skillSourceImported": { en: "Imported", ar: "مستورد" },
+  "dash.skillSourceOnboarding": { en: "Onboarding", ar: "الإعداد الأولي" },
+  "dash.skillSourceSettings": { en: "Settings", ar: "الإعدادات" },
+  "dash.skillSourceAi": { en: "AI analysis", ar: "تحليل ذكي" },
+  "dash.majorTrackEngineering": { en: "Engineering", ar: "هندسي" },
+  "dash.majorTrackTechnology": { en: "Technology", ar: "تقني" },
+  "dash.majorTrackBusiness": { en: "Business", ar: "إداري" },
+  "dash.majorTrackHealth": { en: "Health", ar: "صحي" },
+  "dash.majorTrackScience": { en: "Science", ar: "علمي" },
+  "dash.majorTrackGeneral": { en: "General", ar: "عام" },
+
+  // ─── Career Roadmap / Live market analysis ───
+  "roadmap.title": { en: "Live Career Intelligence", ar: "تحليل مهني مباشر" },
+  "roadmap.description": {
+    en: "Searches real job postings across the web to find what skills & certifications employers actually require. Enter any job title — no restrictions.",
+    ar: "يقوم النظام بالبحث في الوظائف الحقيقية المنشورة على الإنترنت لاستخراج المهارات والشهادات المطلوبة فعليًا. أدخل أي مسمى وظيفي بدون قيود.",
+  },
+  "roadmap.enterCareerTarget": { en: "Enter a career target", ar: "أدخل المسمى الوظيفي المستهدف" },
+  "roadmap.inputPlaceholder": {
+    en: "Enter any job title (e.g., Dentist, Cybersecurity Analyst, Chef)",
+    ar: "أدخل أي مسمى وظيفي (مثل: طبيب أسنان، محلل أمن سيبراني، شيف)",
+  },
+  "roadmap.search": { en: "Search", ar: "بحث" },
+  "roadmap.searching": { en: "Searching…", ar: "جارٍ البحث…" },
+  "roadmap.analyzing": { en: "Analyzing…", ar: "جارٍ التحليل…" },
+  "roadmap.loadingSearching": {
+    en: "Searching job boards for real postings…",
+    ar: "جارٍ البحث في منصات الوظائف عن إعلانات حقيقية…",
+  },
+  "roadmap.loadingPipeline": {
+    en: "Searching job boards → Extracting skills via AI → Building market profile",
+    ar: "البحث في الوظائف → استخراج المهارات بالذكاء الاصطناعي → بناء ملف السوق",
+  },
+  "roadmap.noMarketDataFound": { en: "No market data found", ar: "لم يتم العثور على بيانات سوق" },
+  "roadmap.noDataTitle": { en: "No data found", ar: "لا توجد بيانات" },
+  "roadmap.noDataDescription": {
+    en: "No live or fallback data was found for \"{role}\". Try a different role.",
+    ar: "لم يتم العثور على بيانات مباشرة أو بديلة للمسمى \"{role}\". جرّب مسمى آخر.",
+  },
+  "roadmap.analysisFailed": { en: "Analysis failed", ar: "فشل التحليل" },
+  "roadmap.requestTimeout": {
+    en: "The live request took too long. Please try again in a moment.",
+    ar: "استغرق الطلب المباشر وقتاً أطول من المتوقع. يرجى المحاولة بعد قليل.",
+  },
+  "roadmap.requestFailed": {
+    en: "The live market service is temporarily unavailable. Showing a safe fallback instead.",
+    ar: "خدمة السوق المباشر غير متاحة مؤقتاً. يتم عرض بديل آمن بدلاً من ذلك.",
+  },
+  "roadmap.aiGeneratedTitle": { en: "AI-generated analysis", ar: "تحليل مولد بالذكاء الاصطناعي" },
+  "roadmap.aiGeneratedDescription": {
+    en: "No live job postings were found, so the system generated the most likely requirements for this role.",
+    ar: "لم يتم العثور على وظائف مباشرة، لذلك قام النظام بتوليد أكثر المتطلبات احتمالاً لهذا المسمى.",
+  },
+  "roadmap.sourcesAnalyzed": { en: "Sources analyzed", ar: "المصادر المحللة" },
+  "roadmap.skillsFound": { en: "Skills found", ar: "المهارات المكتشفة" },
+  "roadmap.certificationsFound": { en: "Certifications", ar: "الشهادات" },
+  "roadmap.companies": { en: "Companies", ar: "الشركات" },
+  "roadmap.companiesHiring": { en: "Companies hiring", ar: "الشركات المعلنة" },
+  "roadmap.requiredSkills": { en: "Required skills", ar: "المهارات المطلوبة" },
+  "roadmap.requiredCertifications": { en: "Required certifications", ar: "الشهادات المطلوبة" },
+  "roadmap.byFrequency": { en: "by frequency", ar: "حسب التكرار" },
+  "roadmap.noSkillData": { en: "No skill data.", ar: "لا توجد بيانات مهارات." },
+  "roadmap.noCertData": { en: "No certification data.", ar: "لا توجد بيانات شهادات." },
+  "roadmap.skillGapsTitle": { en: "Your skill gaps vs market", ar: "فجواتك المهارية مقارنة بالسوق" },
+  "roadmap.jobsLabel": { en: "jobs", ar: "وظائف" },
+  "roadmap.topMarketSkills": { en: "Top skills in Saudi market", ar: "أبرز المهارات في السوق السعودي" },
+  "roadmap.last30Days": { en: "last 30 days", ar: "آخر 30 يوماً" },
+  "roadmap.topCertifications": { en: "Top certifications", ar: "أبرز الشهادات" },
+  "roadmap.source.liveWebSearch": { en: "Live web search", ar: "بحث ويب مباشر" },
+  "roadmap.source.marketDatabase": { en: "Market database", ar: "قاعدة بيانات السوق" },
+  "roadmap.source.aiAnalysis": { en: "AI analysis", ar: "تحليل ذكي" },
+  "roadmap.summaryLive": {
+    en: "Analyzed {count} recent postings for \"{role}\".",
+    ar: "تم تحليل {count} إعلاناً حديثاً للمسمى \"{role}\".",
+  },
+  "roadmap.summaryAi": {
+    en: "Showing AI-generated requirements for \"{role}\" because live postings were limited.",
+    ar: "يتم عرض متطلبات مولدة بالذكاء الاصطناعي للمسمى \"{role}\" بسبب محدودية الإعلانات المباشرة.",
+  },
+  "roadmap.summaryFallback": {
+    en: "Showing the best available market data for \"{role}\".",
+    ar: "يتم عرض أفضل بيانات سوق متاحة للمسمى \"{role}\".",
+  },
+  "roadmap.gapBadge": { en: "Gap", ar: "فجوة" },
+  "roadmap.targetRoleFallback": { en: "your target role", ar: "مسماك المستهدف" },
+  "roadmap.sample.softwareEngineer": { en: "Software Engineer", ar: "مهندس برمجيات" },
+  "roadmap.sample.cybersecurityAnalyst": { en: "Cybersecurity Analyst", ar: "محلل أمن سيبراني" },
+  "roadmap.sample.dentist": { en: "Dentist", ar: "طبيب أسنان" },
+  "roadmap.sample.dataAnalyst": { en: "Data Analyst", ar: "محلل بيانات" },
+  "roadmap.sample.pharmacist": { en: "Pharmacist", ar: "صيدلي" },
+  "roadmap.sample.aiEngineer": { en: "AI Engineer", ar: "مهندس ذكاء اصطناعي" },
+  "roadmap.sample.mechanicalEngineer": { en: "Mechanical Engineer", ar: "مهندس ميكانيكي" },
+  "roadmap.sample.accountant": { en: "Accountant", ar: "محاسب" },
+  "roadmap.sample.nurse": { en: "Nurse", ar: "ممرض" },
+  "roadmap.sample.productManager": { en: "Product Manager", ar: "مدير منتج" },
 
   // ─── Common ───
   "common.required": { en: "Required", ar: "مطلوب" },
@@ -582,6 +711,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "common.loading": { en: "Loading...", ar: "جارِ التحميل..." },
   "common.noData": { en: "No data available", ar: "لا توجد بيانات" },
   "common.viewAll": { en: "View All", ar: "عرض الكل" },
+  "common.notAvailable": { en: "Not available", ar: "غير متاح" },
 };
 
 const I18nContext = createContext<I18nContextType | null>(null);
@@ -597,8 +727,11 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    const direction = lang === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = lang;
-    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.documentElement.dir = direction;
+    document.body.setAttribute("dir", direction);
+    document.body.style.direction = direction;
   }, [lang]);
 
   const t = (key: string, vars?: Record<string, string | number>) => {
