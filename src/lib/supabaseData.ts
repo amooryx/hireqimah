@@ -87,7 +87,6 @@ export async function fetchLeaderboard(filter?: { university?: string; major?: s
   const { data } = await query;
   if (!data) return [];
 
-  // Fetch profile names
   const userIds = data.map(d => d.user_id);
   const { data: profiles } = await supabase
     .from("profiles")
@@ -113,21 +112,13 @@ export async function fetchCertificationCatalog() {
   return data || [];
 }
 
-// ===== Fetch job cache =====
-export async function fetchJobCache(sector?: string) {
-  let query = supabase.from("job_cache").select("*").order("fetched_at", { ascending: false }).limit(100);
-  if (sector) query = query.eq("sector", sector);
-  const { data } = await query;
-  return data || [];
-}
-
-// ===== Fetch market skill rankings from job_market_data =====
+// ===== Fetch market skill rankings from job_market_data (frequency-based) =====
 export async function fetchMarketSkillRankings(limit = 50, days = 30) {
   const { data } = await supabase.rpc("get_market_skill_rankings", { _limit: limit, _days: days });
   return data || [];
 }
 
-// ===== Fetch market cert rankings from job_market_data =====
+// ===== Fetch market cert rankings from job_market_data (frequency-based) =====
 export async function fetchMarketCertRankings(limit = 30, days = 30) {
   const { data } = await supabase.rpc("get_market_cert_rankings", { _limit: limit, _days: days });
   return data || [];

@@ -26,7 +26,6 @@ serve(async (req) => {
     if (action === "get-demand") {
       const days = body.days || 30;
 
-      // Use the aggregation functions
       const [skillsRes, certsRes, jobCountRes, lastRefresh] = await Promise.all([
         supabase.rpc("get_market_skill_rankings", { _limit: 50, _days: days }),
         supabase.rpc("get_market_cert_rankings", { _limit: 30, _days: days }),
@@ -90,8 +89,148 @@ serve(async (req) => {
       );
     }
 
+    // ── ACTION: get-role-insights — Dynamic role-specific data with similarity fallback
+    if (action === "get-role-insights") {
+      const role = body.role;
+      if (!role || typeof role !== "string" || role.trim().length < 2) {
+        return new Response(
+          JSON.stringify({ error: "role (string, min 2 chars) required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const days = body.days || 30;
+      const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+
+      // Count exact/partial matches for this role
+      const { count: exactCount } = await supabase
+        .from("job_market_data")
+        .select("*", { count: "exact", head: true })
+        .ilike("title", `%${role.trim()}%`)
+        .gte("scraped_at", cutoff);
+
+      const hasData = (exactCount || 0) > 0;
+
+      if (hasData) {
+        // Direct match: get skills & certs from matching jobs
+        const { data: matchingJobs } = await supabase
+          .from("job_market_data")
+          .select("title, company, extracted_skills, extracted_certifications, sector, experience_level")
+          .ilike("title", `%${role.trim()}%`)
+          .gte("scraped_at", cutoff)
+          .limit(500);
+
+        const skillFreq: Record<string, number> = {};
+        const certFreq: Record<string, number> = {};
+        const companies = new Set<string>();
+        const sectors = new Set<string>();
+
+        for (const j of (matchingJobs || [])) {
+          if (j.company) companies.add(j.company);
+          if (j.sector) sectors.add(j.sector);
+          for (const s of (j.extracted_skills || [])) {
+            const k = s.toLowerCase().trim();
+            if (k) skillFreq[k] = (skillFreq[k] || 0) + 1;
+          }
+          for (const c of (j.extracted_certifications || [])) {
+            const k = c.trim();
+            if (k) certFreq[k] = (certFreq[k] || 0) + 1;
+          }
+        }
+
+        const totalJobs = matchingJobs?.length || 0;
+        const topSkills = Object.entries(skillFreq)
+          .map(([name, freq]) => ({ skill_name: name, frequency: freq, percentage: Math.round((freq / totalJobs) * 1000) / 10 }))
+          .sort((a, b) => b.frequency - a.frequency)
+          .slice(0, 20);
+
+        const topCerts = Object.entries(certFreq)
+          .map(([name, freq]) => ({ cert_name: name, frequency: freq, percentage: Math.round((freq / totalJobs) * 1000) / 10 }))
+          .sort((a, b) => b.frequency - a.frequency)
+          .slice(0, 10);
+
+        return new Response(
+          JSON.stringify({
+            match_type: "exact",
+            role: role.trim(),
+            job_count: totalJobs,
+            companies: Array.from(companies).slice(0, 15),
+            sectors: Array.from(sectors),
+            skills: topSkills,
+            certifications: topCerts,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Fallback: similarity match
+      const { data: similar } = await supabase.rpc("find_similar_roles", {
+        _search: role.trim(),
+        _limit: 10,
+        _days: days,
+      });
+
+      if (similar && similar.length > 0) {
+        // Get aggregated skills/certs from similar roles
+        const topRole = similar[0].role_title;
+        const { data: fallbackJobs } = await supabase
+          .from("job_market_data")
+          .select("extracted_skills, extracted_certifications, company")
+          .ilike("title", `%${topRole}%`)
+          .gte("scraped_at", cutoff)
+          .limit(200);
+
+        const skillFreq: Record<string, number> = {};
+        const certFreq: Record<string, number> = {};
+        for (const j of (fallbackJobs || [])) {
+          for (const s of (j.extracted_skills || [])) {
+            const k = s.toLowerCase().trim();
+            if (k) skillFreq[k] = (skillFreq[k] || 0) + 1;
+          }
+          for (const c of (j.extracted_certifications || [])) {
+            const k = c.trim();
+            if (k) certFreq[k] = (certFreq[k] || 0) + 1;
+          }
+        }
+
+        const total = fallbackJobs?.length || 1;
+        return new Response(
+          JSON.stringify({
+            match_type: "similar",
+            searched_role: role.trim(),
+            message: `No exact data for "${role.trim()}". Showing nearest matches.`,
+            similar_roles: similar,
+            closest_role: topRole,
+            job_count: similar.reduce((s: number, r: any) => s + Number(r.job_count), 0),
+            skills: Object.entries(skillFreq)
+              .map(([name, freq]) => ({ skill_name: name, frequency: freq, percentage: Math.round((freq / total) * 1000) / 10 }))
+              .sort((a, b) => b.frequency - a.frequency)
+              .slice(0, 20),
+            certifications: Object.entries(certFreq)
+              .map(([name, freq]) => ({ cert_name: name, frequency: freq, percentage: Math.round((freq / total) * 1000) / 10 }))
+              .sort((a, b) => b.frequency - a.frequency)
+              .slice(0, 10),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // No matches at all
+      return new Response(
+        JSON.stringify({
+          match_type: "none",
+          searched_role: role.trim(),
+          message: `No data yet for "${role.trim()}" or similar roles. Try a different career target.`,
+          skills: [],
+          certifications: [],
+          similar_roles: [],
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Use "get-demand", "get-student-gaps", or "get-sectors".' }),
+      JSON.stringify({ error: 'Use "get-demand", "get-student-gaps", "get-sectors", or "get-role-insights".' }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {

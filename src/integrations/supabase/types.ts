@@ -929,6 +929,14 @@ export type Database = {
         }
         Returns: Json
       }
+      find_similar_roles: {
+        Args: { _days?: number; _limit?: number; _search: string }
+        Returns: {
+          job_count: number
+          role_title: string
+          similarity_rank: number
+        }[]
+      }
       get_market_cert_rankings: {
         Args: { _days?: number; _limit?: number }
         Returns: {
@@ -942,6 +950,15 @@ export type Database = {
         Returns: {
           frequency: number
           percentage: number
+          skill_name: string
+        }[]
+      }
+      get_role_requirements: {
+        Args: { _days?: number; _role_pattern: string }
+        Returns: {
+          cert_frequency: number
+          cert_name: string
+          frequency: number
           skill_name: string
         }[]
       }
