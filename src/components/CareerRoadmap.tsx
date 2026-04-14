@@ -52,11 +52,11 @@ export default function CareerRoadmap({ userId, currentCareerTarget }: CareerRoa
 
   useEffect(() => {
     Promise.all([
-      untypedTable("market_skill_demand").select("*").order("demand_score", { ascending: false }).limit(20),
-      untypedTable("market_cert_demand").select("*").order("demand_score", { ascending: false }).limit(15),
-    ]).then(([{ data: sd }, { data: cd }]) => {
-      setMarketSkills(sd || []);
-      setMarketCerts(cd || []);
+      fetchMarketSkillRankings(20, 30),
+      fetchMarketCertRankings(15, 30),
+    ]).then(([sd, cd]) => {
+      setMarketSkills(sd);
+      setMarketCerts(cd);
     });
 
     if (currentCareerTarget?.trim()) {
