@@ -439,14 +439,133 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
           </div>
         </TabsContent>
 
-        {/* Opportunities - Interview Requests */}
-        <TabsContent value="opportunities">
+        {/* Internships Tab */}
+        <TabsContent value="internships">
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Interview Requests & Opportunities</h3>
+            <h3 className="text-lg font-semibold font-heading mb-4">{t("dash.internships")}</h3>
+            {(() => {
+              const internships = jobPostings.filter((jp: any) => jp.type === "internship");
+              return internships.length === 0 ? (
+                <div className="text-center py-12">
+                  <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">{t("dash.noInternships")}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {internships.map((jp: any) => {
+                    const hasApplied = applications.some(a => a.job_posting_id === jp.id);
+                    return (
+                      <div key={jp.id} className="rounded-lg border p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{jp.title}</p>
+                            <Badge variant="secondary" className="text-[10px]">{t("dash.internal")}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{jp.company || "—"} · {jp.location} · {jp.sector || "General"}</p>
+                          {jp.required_skills?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {jp.required_skills.slice(0, 4).map((s: string) => <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>)}
+                            </div>
+                          )}
+                        </div>
+                        <Button size="sm" disabled={hasApplied || applyingTo === jp.id} onClick={() => handleApply(jp.id)}>
+                          {hasApplied ? <><CheckCircle className="h-4 w-4 mr-1" />{t("dash.applied")}</> : t("dash.apply")}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </TabsContent>
+
+        {/* Jobs Tab - Internal + External */}
+        <TabsContent value="jobs">
+          <div className="rounded-xl border bg-card p-6">
+            <h3 className="text-lg font-semibold font-heading mb-2">{t("dash.jobs")}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{t("dash.jobPostings")}</p>
+
+            {/* Internal Jobs */}
+            {(() => {
+              const internalJobs = jobPostings.filter((jp: any) => jp.type === "job" || !jp.type);
+              return internalJobs.length > 0 ? (
+                <div className="space-y-3 mb-6">
+                  {internalJobs.map((jp: any) => {
+                    const hasApplied = applications.some(a => a.job_posting_id === jp.id);
+                    return (
+                      <div key={jp.id} className="rounded-lg border p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm">{jp.title}</p>
+                              <Badge className="text-[10px] bg-primary/10 text-primary">{t("dash.internal")}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{jp.company || "—"} · {jp.location} · {jp.sector || "General"}</p>
+                            {jp.required_skills?.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {jp.required_skills.slice(0, 4).map((s: string) => <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>)}
+                              </div>
+                            )}
+                          </div>
+                          <Button size="sm" disabled={hasApplied || applyingTo === jp.id} onClick={() => handleApply(jp.id)}>
+                            {hasApplied ? <><CheckCircle className="h-4 w-4 mr-1" />{t("dash.applied")}</> : t("dash.apply")}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null;
+            })()}
+
+            {/* External Jobs from job_cache */}
+            {jobCache.length > 0 && (
+              <>
+                <h4 className="font-semibold mb-3 mt-4">{t("dash.external")} — {t("dash.marketTrends")}</h4>
+                <div className="space-y-3">
+                  {jobCache.slice(0, 20).map((job: any) => (
+                    <div key={job.id} className="rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{job.title}</p>
+                            <Badge variant="outline" className="text-[10px]">{t("dash.external")}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{job.company || "—"} · {job.location} · {job.sector}</p>
+                          {(job.required_skills?.length > 0 || job.required_certifications?.length > 0) && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {job.required_skills?.slice(0, 4).map((s: string) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
+                            </div>
+                          )}
+                        </div>
+                        {job.source_url && (
+                          <a href={job.source_url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="outline">
+                              <ExternalLink className="h-4 w-4 mr-1" />{t("dash.applyExternally")}
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {jobPostings.filter((jp: any) => jp.type === "job" || !jp.type).length === 0 && jobCache.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">{t("dash.noJobs")}</p>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Interview Requests & Opportunities */}
+        <TabsContent value="interviews">
+          <div className="rounded-xl border bg-card p-6">
+            <h3 className="text-lg font-semibold font-heading mb-4">{t("dash.interviewRequests")}</h3>
             {interviews.length === 0 ? (
               <div className="text-center py-12">
-                <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">No interview requests yet. Keep improving your ERS to attract recruiters!</p>
+                <Send className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">{t("dash.noInterviews")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -456,7 +575,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm">{iv.job_title || "Interview Request"}</p>
+                          <p className="font-medium text-sm">{iv.job_title || t("dash.interviewRequests")}</p>
                           <Badge variant={
                             iv.status === "requested" ? "default" :
                             iv.status === "accepted" ? "secondary" :
@@ -472,10 +591,10 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                       {iv.status === "requested" && (
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => handleInterviewResponse(iv.id, "accepted")}>
-                            <CheckCircle className="h-4 w-4 mr-1" />Accept
+                            <CheckCircle className="h-4 w-4 mr-1" />{t("dash.accept")}
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => handleInterviewResponse(iv.id, "declined")}>
-                            Decline
+                            {t("dash.decline")}
                           </Button>
                         </div>
                       )}
@@ -484,35 +603,6 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                 ))}
               </div>
             )}
-
-            {/* Job matches based on profile */}
-            <h4 className="font-semibold mt-8 mb-3">Recommended Opportunities</h4>
-            {jobCache.length > 0 ? (
-              <div className="space-y-2">
-                {jobCache.filter(job => {
-                  const majorLower = (sp?.major || "").toLowerCase();
-                  const sectorLower = (job.sector || "").toLowerCase();
-                  return sectorLower.includes(majorLower.split(" ")[0]) || majorLower.includes(sectorLower.split(" ")[0]) || true;
-                }).slice(0, 10).map((job: any) => (
-                  <div key={job.id} className="rounded-lg border p-3 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{job.title}</p>
-                      <p className="text-xs text-muted-foreground">{job.company || "—"} · {job.location} · {job.sector}</p>
-                      {job.required_skills?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {job.required_skills.slice(0, 4).map((s: string) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
-                        </div>
-                      )}
-                    </div>
-                    {job.source_url && (
-                      <a href={job.source_url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" variant="outline">View</Button>
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : <p className="text-sm text-muted-foreground">No opportunities available yet.</p>}
           </div>
         </TabsContent>
 
