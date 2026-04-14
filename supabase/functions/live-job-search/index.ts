@@ -177,7 +177,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               query: `"${role.trim()}" job description required skills certifications qualifications`,
-              limit: 15,
+              limit: 10,
               scrapeOptions: { formats: ["markdown"] },
             }),
           });
