@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import CareerRoadmap from "@/components/CareerRoadmap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,9 +15,17 @@ import { fetchStudentDashboard, calculateERSFromData, fetchLeaderboard } from "@
 import type { AuthUser } from "@/lib/supabaseAuth";
 import { useI18n } from "@/lib/i18n";
 import {
+  buildFallbackExternalJobs,
+  buildStudentJobPreferences,
+  fetchLiveJobSearch,
+  scoreJobTextMatch,
+  sortLiveJobPostingsByPreferences,
+  type LiveJobPosting,
+} from "@/lib/liveJobs";
+import {
   Trophy, Target, Briefcase, Map, Bell, Upload, Award,
   TrendingUp, Star, CheckCircle, Circle, Clock, Info,
-  GraduationCap, ExternalLink, Send, Share2, Link as LinkIcon
+  GraduationCap, ExternalLink, Send, Share2, Link as LinkIcon, Loader2, AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -30,7 +38,7 @@ interface StudentDashboardProps { user: AuthUser; }
 
 const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
   const { toast } = useToast();
-  const { t, lang } = useI18n();
+  const { t, lang, dir } = useI18n();
   const [loading, setLoading] = useState(true);
   const [dashData, setDashData] = useState<any>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -44,6 +52,11 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [applyingTo, setApplyingTo] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("ers");
+  const [externalJobs, setExternalJobs] = useState<LiveJobPosting[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsSourceMode, setJobsSourceMode] = useState<"live" | "cache" | "none">("none");
+  const [jobsErrorCode, setJobsErrorCode] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     const [data, { data: interviewData }, { data: notifData }] = await Promise.all([
@@ -97,11 +110,145 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
       .then(({ data }: any) => setApplications(data || []));
   }, [authUser.id]);
 
+  const sp = dashData?.studentProfile;
+  const isArabic = lang === "ar";
+  const emptyValue = t("common.notAvailable");
+
+  const studentJobPreferences = useMemo(
+    () => buildStudentJobPreferences(sp, dashData?.skills || []),
+    [sp, dashData?.skills]
+  );
+
+  const scorePosting = useCallback(
+    (posting: {
+      title?: string | null;
+      company?: string | null;
+      location?: string | null;
+      sector?: string | null;
+      description?: string | null;
+      required_skills?: string[] | null;
+      required_certifications?: string[] | null;
+    }) => {
+      return scoreJobTextMatch(
+        [
+          posting.title,
+          posting.company,
+          posting.location,
+          posting.sector,
+          posting.description,
+          ...(posting.required_skills || []),
+          ...(posting.required_certifications || []),
+        ]
+          .filter(Boolean)
+          .join(" "),
+        studentJobPreferences.keywords
+      );
+    },
+    [studentJobPreferences.keywords]
+  );
+
+  const personalizedInternships = useMemo(
+    () =>
+      [...jobPostings.filter((jp: any) => jp.type === "internship")].sort(
+        (a, b) => scorePosting(b) - scorePosting(a)
+      ),
+    [jobPostings, scorePosting]
+  );
+
+  const personalizedInternalJobs = useMemo(
+    () =>
+      [...jobPostings.filter((jp: any) => jp.type === "job" || !jp.type)].sort(
+        (a, b) => scorePosting(b) - scorePosting(a)
+      ),
+    [jobPostings, scorePosting]
+  );
+
+  const mergedJobs = useMemo(() => {
+    const internalJobs = personalizedInternalJobs.map((job: any) => ({
+      ...job,
+      card_type: "internal" as const,
+      relevance_score: scorePosting(job),
+    }));
+
+    const rankedExternal = sortLiveJobPostingsByPreferences(
+      externalJobs,
+      studentJobPreferences,
+      12
+    ).map((job) => ({
+      ...job,
+      card_type: "external" as const,
+      relevance_score: scorePosting(job),
+    }));
+
+    return [...internalJobs, ...rankedExternal].sort((a, b) => {
+      if (b.relevance_score !== a.relevance_score) {
+        return b.relevance_score - a.relevance_score;
+      }
+
+      if (a.card_type === b.card_type) return 0;
+      return a.card_type === "internal" ? -1 : 1;
+    });
+  }, [externalJobs, personalizedInternalJobs, scorePosting, studentJobPreferences]);
+
+  const loadPersonalizedJobs = useCallback(async () => {
+    const fallbackJobs = buildFallbackExternalJobs(jobCache, studentJobPreferences, 12);
+
+    if (!studentJobPreferences.searchRole) {
+      setExternalJobs(fallbackJobs);
+      setJobsSourceMode(fallbackJobs.length > 0 ? "cache" : "none");
+      setJobsErrorCode(null);
+      return;
+    }
+
+    setJobsLoading(true);
+    setJobsErrorCode(null);
+
+    const { data, error } = await fetchLiveJobSearch({
+      role: studentJobPreferences.searchRole,
+      userId: authUser.id,
+      timeoutMs: 16000,
+      retries: 1,
+    });
+
+    if (data?.job_postings?.length) {
+      setExternalJobs(
+        sortLiveJobPostingsByPreferences(data.job_postings, studentJobPreferences, 12)
+      );
+      setJobsSourceMode("live");
+      setJobsErrorCode(null);
+      setJobsLoading(false);
+      return;
+    }
+
+    setExternalJobs(fallbackJobs);
+    setJobsSourceMode(fallbackJobs.length > 0 ? "cache" : "none");
+    setJobsErrorCode(error?.code || (data ? null : "request_failed"));
+    setJobsLoading(false);
+  }, [authUser.id, jobCache, studentJobPreferences]);
+
+  useEffect(() => {
+    if (activeTab !== "jobs") return;
+    void loadPersonalizedJobs();
+  }, [activeTab, loadPersonalizedJobs]);
+
   const handleApply = async (jobPostingId: string) => {
     if (applications.some(a => a.job_posting_id === jobPostingId)) {
       toast({ title: t("dash.alreadyApplied") }); return;
     }
+
+    const optimisticId = `optimistic-${jobPostingId}`;
+    setApplications(prev => [
+      ...prev,
+      {
+        id: optimisticId,
+        student_user_id: authUser.id,
+        job_posting_id: jobPostingId,
+        status: "applied",
+        created_at: new Date().toISOString(),
+      },
+    ]);
     setApplyingTo(jobPostingId);
+
     try {
       const { error } = await untypedTable("applications").insert({
         student_user_id: authUser.id,
@@ -109,12 +256,13 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
         status: "applied",
       });
       if (error) throw error;
-      setApplications(prev => [...prev, { student_user_id: authUser.id, job_posting_id: jobPostingId, status: "applied" }]);
       toast({ title: t("dash.applicationSent") });
     } catch (e: any) {
+      setApplications(prev => prev.filter(app => app.id !== optimisticId));
       toast({ title: t("dash.uploadFailed"), description: e.message, variant: "destructive" });
+    } finally {
+      setApplyingTo(null);
     }
-    setApplyingTo(null);
   };
 
   const handleFileUpload = useCallback((type: "transcript" | "certificate" | "project") => {
@@ -175,9 +323,51 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
     return map[f];
   };
 
+  const proficiencyLabel = (value?: string | null) => {
+    const normalized = value?.toLowerCase() || "";
+    const map: Record<string, string> = {
+      expert: t("dash.skillLevelExpert"),
+      advanced: t("dash.skillLevelAdvanced"),
+      intermediate: t("dash.skillLevelIntermediate"),
+      beginner: t("dash.skillLevelBeginner"),
+    };
+    return map[normalized] || value || emptyValue;
+  };
+
+  const skillSourceLabel = (value?: string | null) => {
+    const normalized = value?.toLowerCase() || "";
+    const map: Record<string, string> = {
+      transcript: t("dash.skillSourceTranscript"),
+      certification: t("dash.skillSourceCertificate"),
+      certificate: t("dash.skillSourceCertificate"),
+      project: t("dash.skillSourceProject"),
+      manual: t("dash.skillSourceManual"),
+      self_reported: t("dash.skillSourceSelfReported"),
+      selfreported: t("dash.skillSourceSelfReported"),
+      imported: t("dash.skillSourceImported"),
+      onboarding: t("dash.skillSourceOnboarding"),
+      settings: t("dash.skillSourceSettings"),
+      ai: t("dash.skillSourceAi"),
+    };
+    return map[normalized] || value || emptyValue;
+  };
+
+  const majorTrackLabel = (value?: string | null) => {
+    const normalized = value?.toLowerCase() || "";
+    const map: Record<string, string> = {
+      engineering: t("dash.majorTrackEngineering"),
+      technology: t("dash.majorTrackTechnology"),
+      business: t("dash.majorTrackBusiness"),
+      health: t("dash.majorTrackHealth"),
+      science: t("dash.majorTrackScience"),
+      general: t("dash.majorTrackGeneral"),
+    };
+    return map[normalized] || value || t("dash.majorTrackGeneral");
+  };
+
   if (loading) {
     return (
-      <div className="container py-6 space-y-6">
+      <div dir={dir} className={`container py-6 space-y-6 ${isArabic ? "text-right" : "text-left"}`}>
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -191,7 +381,6 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
     return <StudentOnboarding userId={authUser.id} onComplete={loadDashboard} />;
   }
 
-  const sp = dashData?.studentProfile;
   const ers = calculateERSFromData(dashData || {});
   const myRank = leaderboard.findIndex(s => s.user_id === authUser.id) + 1;
 
@@ -208,19 +397,19 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
   const completeness = Math.round((completenessChecks.filter(c => c.done).length / completenessChecks.length) * 100);
 
   return (
-    <div className="container py-6 space-y-6">
+    <div dir={dir} className={`container py-6 space-y-6 ${isArabic ? "text-right" : "text-left"}`}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-heading">{t("dash.welcomeName", { name: authUser.full_name })}</h1>
           <p className="text-muted-foreground text-sm">
-            {sp?.university || "—"} · {sp?.major || "—"} · {t("signup.gpa")} {sp?.gpa || "N/A"}/{sp?.gpa_scale === "5" ? "5.0" : "4.0"}
+            {sp?.university || emptyValue} · {sp?.major || emptyValue} · {t("signup.gpa")} {sp?.gpa || emptyValue}/{sp?.gpa_scale === "5" ? "5.0" : "4.0"}
           </p>
           {(sp?.github_url || sp?.linkedin_url || sp?.portfolio_url) && (
-            <div className="flex gap-3 mt-1">
-              {sp?.github_url && <a href={sp.github_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-3 w-3" />GitHub</a>}
-              {sp?.linkedin_url && <a href={sp.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-3 w-3" />LinkedIn</a>}
-              {sp?.portfolio_url && <a href={sp.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-3 w-3" />Portfolio</a>}
+            <div className={`flex flex-wrap gap-3 mt-1 ${isArabic ? "justify-end" : ""}`}>
+              {sp?.github_url && <a href={sp.github_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-3 w-3" />{t("dash.githubProfile")}</a>}
+              {sp?.linkedin_url && <a href={sp.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-3 w-3" />{t("dash.linkedinProfile")}</a>}
+              {sp?.portfolio_url && <a href={sp.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1"><LinkIcon className="h-3 w-3" />{t("dash.portfolioLink")}</a>}
             </div>
           )}
         </div>
@@ -248,8 +437,8 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="ers" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList dir={dir} className="grid w-full grid-cols-4 lg:grid-cols-9">
           <TabsTrigger value="ers"><Target className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("dash.ers")}</TabsTrigger>
           <TabsTrigger value="leaderboard"><Trophy className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("dash.leaderboard")}</TabsTrigger>
           <TabsTrigger value="uploads"><Upload className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("dash.docs")}</TabsTrigger>
@@ -349,7 +538,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                 </div>
                 {ers.explanation?.major_category && (
                   <p className="text-xs text-muted-foreground mt-4 border-t pt-3">
-                    {t("dash.majorTrackLabel")}: <span className="font-semibold capitalize">{ers.explanation.major_category}</span> — {t("dash.weightsNote")}
+                    {t("dash.majorTrackLabel")}: <span className="font-semibold capitalize">{majorTrackLabel(ers.explanation.major_category)}</span> — {t("dash.weightsNote")}
                   </p>
                 )}
               </div>
@@ -388,7 +577,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
             <div className="space-y-2">
               {leaderboard.map((s, i) => (
                 <motion.div key={s.user_id}
-                  className={`flex items-center gap-4 rounded-lg p-3 ${s.user_id === authUser.id ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"}`}
+                      className={`flex items-center gap-4 rounded-lg p-3 ${isArabic ? "flex-row-reverse text-right" : ""} ${s.user_id === authUser.id ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"}`}
                   initial={{ opacity: 0, x: lang === "ar" ? 20 : -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
                   <span className={`w-8 text-center font-bold text-lg ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
@@ -429,7 +618,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
             {dashData?.projects?.length > 0 ? (
               <div className="space-y-2">
                 {dashData.projects.map((p: any) => (
-                  <div key={p.id} className="flex items-start gap-3 rounded-lg border p-3">
+                    <div key={p.id} className={`flex items-start gap-3 rounded-lg border p-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
                     <CheckCircle className={`h-4 w-4 mt-0.5 shrink-0 ${p.verified ? "text-[hsl(var(--success))]" : "text-muted-foreground"}`} />
                     <div>
                       <p className="text-sm font-medium">{p.title}</p>
@@ -450,7 +639,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
           <div className="rounded-xl border bg-card p-6">
             <h3 className="text-lg font-semibold font-heading mb-4">{t("dash.internships")}</h3>
             {(() => {
-              const internships = jobPostings.filter((jp: any) => jp.type === "internship");
+              const internships = personalizedInternships;
               return internships.length === 0 ? (
                 <div className="text-center py-12">
                   <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
@@ -461,20 +650,20 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                   {internships.map((jp: any) => {
                     const hasApplied = applications.some(a => a.job_posting_id === jp.id);
                     return (
-                      <div key={jp.id} className="rounded-lg border p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div key={jp.id} className={`rounded-lg border p-4 flex flex-col gap-3 ${isArabic ? "sm:flex-row-reverse sm:items-center text-right" : "sm:flex-row sm:items-center"}`}>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className={`flex items-center gap-2 ${isArabic ? "justify-end" : ""}`}>
                             <p className="font-medium text-sm">{jp.title}</p>
                             <Badge variant="secondary" className="text-[10px]">{t("dash.internal")}</Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground">{jp.company || "—"} · {jp.location} · {jp.sector || t("dash.general")}</p>
+                          <p className="text-xs text-muted-foreground">{jp.company || emptyValue} · {jp.location || emptyValue} · {jp.sector || t("dash.general")}</p>
                           {jp.required_skills?.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
+                            <div className={`flex flex-wrap gap-1 mt-1 ${isArabic ? "justify-end" : ""}`}>
                               {jp.required_skills.slice(0, 4).map((s: string) => <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>)}
                             </div>
                           )}
                         </div>
-                        <Button size="sm" disabled={hasApplied || applyingTo === jp.id} onClick={() => handleApply(jp.id)}>
+                        <Button size="sm" className="min-w-28" disabled={hasApplied || applyingTo === jp.id} onClick={() => handleApply(jp.id)}>
                           {hasApplied ? <><CheckCircle className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("dash.applied")}</> : t("dash.apply")}
                         </Button>
                       </div>
@@ -488,82 +677,103 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
 
         {/* Jobs Tab - Internal + External */}
         <TabsContent value="jobs">
-          <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-2">{t("dash.jobs")}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t("dash.jobPostings")}</p>
+          <div className="rounded-xl border bg-card p-6 space-y-4">
+            <div className={`flex flex-col gap-3 ${isArabic ? "md:flex-row-reverse md:items-start" : "md:flex-row md:items-start"} md:justify-between`}>
+              <div>
+                <h3 className="text-lg font-semibold font-heading mb-2">{t("dash.jobs")}</h3>
+                <p className="text-sm text-muted-foreground">{t("dash.jobsDescription")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("dash.jobsSearchRole", { role: studentJobPreferences.searchRole || t("dash.general") })}</p>
+              </div>
+              <Badge variant="outline" className="w-fit text-[10px]">
+                {jobsSourceMode === "live"
+                  ? t("dash.liveJobsSource")
+                  : jobsSourceMode === "cache"
+                    ? t("dash.cachedJobsSource")
+                    : t("dash.external")}
+              </Badge>
+            </div>
 
-            {/* Internal Jobs */}
-            {(() => {
-              const internalJobs = jobPostings.filter((jp: any) => jp.type === "job" || !jp.type);
-              return internalJobs.length > 0 ? (
-                <div className="space-y-3 mb-6">
-                  {internalJobs.map((jp: any) => {
-                    const hasApplied = applications.some(a => a.job_posting_id === jp.id);
-                    return (
-                      <div key={jp.id} className="rounded-lg border p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm">{jp.title}</p>
-                              <Badge className="text-[10px] bg-primary/10 text-primary">{t("dash.internal")}</Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{jp.company || "—"} · {jp.location} · {jp.sector || t("dash.general")}</p>
-                            {jp.required_skills?.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {jp.required_skills.slice(0, 4).map((s: string) => <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>)}
-                              </div>
+            {jobsLoading && (
+              <div className={`rounded-lg border bg-accent/40 p-4 flex items-center gap-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
+                <Loader2 className="h-5 w-5 animate-spin text-primary shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">{t("dash.fetchingJobs")}</p>
+                  <p className="text-xs text-muted-foreground">{t("dash.jobsSearchRole", { role: studentJobPreferences.searchRole || t("dash.general") })}</p>
+                </div>
+              </div>
+            )}
+
+            {!jobsLoading && jobsSourceMode === "cache" && (
+              <div className={`rounded-lg border border-accent bg-accent/30 p-4 flex items-start gap-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
+                <AlertTriangle className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                <p className="text-sm text-muted-foreground">{t("dash.cachedJobsNotice")}</p>
+              </div>
+            )}
+
+            {!jobsLoading && jobsErrorCode && jobsSourceMode === "none" && (
+              <div className={`rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
+                <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+                <p className="text-sm text-muted-foreground">{t("dash.jobsUnavailableDescription")}</p>
+              </div>
+            )}
+
+            {mergedJobs.length > 0 ? (
+              <div className="space-y-3">
+                {mergedJobs.map((job: any) => {
+                  const hasApplied = job.card_type === "internal" && applications.some(a => a.job_posting_id === job.id);
+
+                  return (
+                    <div key={`${job.card_type}-${job.id}`} className="rounded-lg border p-4">
+                      <div className={`flex flex-col gap-3 ${isArabic ? "sm:flex-row-reverse sm:items-start text-right" : "sm:flex-row sm:items-start"} sm:justify-between`}>
+                        <div className="flex-1 min-w-0">
+                          <div className={`flex flex-wrap items-center gap-2 ${isArabic ? "justify-end" : ""}`}>
+                            <p className="font-medium text-sm">{job.title}</p>
+                            <Badge className={job.card_type === "internal" ? "text-[10px] bg-primary/10 text-primary" : "text-[10px]"} variant={job.card_type === "internal" ? undefined : "outline"}>
+                              {job.card_type === "internal" ? t("dash.internal") : t("dash.external")}
+                            </Badge>
+                            {job.card_type === "external" && job.source && (
+                              <Badge variant="outline" className="text-[10px]">{job.source}</Badge>
                             )}
                           </div>
-                          <Button size="sm" disabled={hasApplied || applyingTo === jp.id} onClick={() => handleApply(jp.id)}>
-                            {hasApplied ? <><CheckCircle className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("dash.applied")}</> : t("dash.apply")}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null;
-            })()}
-
-            {/* External Jobs from job_cache */}
-            {jobCache.length > 0 && (
-              <>
-                <h4 className="font-semibold mb-3 mt-4">{t("dash.external")} — {t("dash.marketTrends")}</h4>
-                <div className="space-y-3">
-                  {jobCache.slice(0, 20).map((job: any) => (
-                    <div key={job.id} className="rounded-lg border p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{job.title}</p>
-                            <Badge variant="outline" className="text-[10px]">{t("dash.external")}</Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{job.company || "—"} · {job.location} · {job.sector || t("dash.general")}</p>
-                          {(job.required_skills?.length > 0) && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {job.required_skills?.slice(0, 4).map((s: string) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {job.company || emptyValue} · {job.location || emptyValue} · {job.sector || t("dash.general")}
+                          </p>
+                          {job.description && (
+                            <p className="text-xs text-muted-foreground mt-2">{job.description}</p>
+                          )}
+                          {job.required_skills?.length > 0 && (
+                            <div className={`flex flex-wrap gap-1 mt-2 ${isArabic ? "justify-end" : ""}`}>
+                              {job.required_skills.slice(0, 4).map((skill: string) => (
+                                <Badge key={`${job.id}-${skill}`} variant={job.card_type === "internal" ? "outline" : "secondary"} className="text-[10px]">
+                                  {skill}
+                                </Badge>
+                              ))}
                             </div>
                           )}
                         </div>
-                        {job.source_url ? (
+
+                        {job.card_type === "internal" ? (
+                          <Button size="sm" className="min-w-28" disabled={hasApplied || applyingTo === job.id} onClick={() => handleApply(job.id)}>
+                            {hasApplied ? <><CheckCircle className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("dash.applied")}</> : t("dash.apply")}
+                          </Button>
+                        ) : (
                           <a href={job.source_url} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" className="min-w-36">
                               <ExternalLink className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("dash.applyExternally")}
                             </Button>
                           </a>
-                        ) : (
-                          <Button size="sm" variant="outline" disabled>
-                            <ExternalLink className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("dash.applyExternally")}
-                          </Button>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-            {jobPostings.filter((jp: any) => jp.type === "job" || !jp.type).length === 0 && jobCache.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">{t("dash.noJobs")}</p>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">{t("dash.noJobs")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{jobsErrorCode ? t("dash.jobsUnavailableDescription") : t("dash.noJobsDescription")}</p>
+              </div>
             )}
           </div>
         </TabsContent>
@@ -582,9 +792,9 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                 {interviews.map((iv, i) => (
                   <motion.div key={iv.id} className="rounded-lg border p-4"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className={`flex flex-col gap-3 ${isArabic ? "sm:flex-row-reverse sm:items-center text-right" : "sm:flex-row sm:items-center"}`}>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${isArabic ? "justify-end" : ""}`}>
                           <p className="font-medium text-sm">{iv.job_title || t("dash.interviewRequests")}</p>
                           <Badge variant={
                             iv.status === "requested" ? "default" :
@@ -628,7 +838,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
             {dashData?.skills?.length > 0 ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {dashData.skills.map((s: any) => (
-                  <div key={s.id} className="flex items-center gap-3 rounded-lg border p-3">
+                  <div key={s.id} className={`flex items-center gap-3 rounded-lg border p-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
                     <div className={`h-3 w-3 rounded-full ${
                       s.proficiency_level === "expert" ? "bg-[hsl(var(--success))]" :
                       s.proficiency_level === "advanced" ? "bg-primary" :
@@ -637,7 +847,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm font-medium">{s.skill_name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{s.proficiency_level} · {s.source}</p>
+                      <p className="text-xs text-muted-foreground">{proficiencyLabel(s.proficiency_level)} · {skillSourceLabel(s.source)}</p>
                     </div>
                     {s.verified && <CheckCircle className="h-4 w-4 text-[hsl(var(--success))]" />}
                   </div>
@@ -665,7 +875,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
               <div className="space-y-2">
                 {notifications.map((n, i) => (
                   <motion.div key={n.id}
-                    className={`flex items-start gap-3 rounded-lg border p-3 ${!n.read ? "bg-primary/5 border-primary/20" : ""}`}
+                    className={`flex items-start gap-3 rounded-lg border p-3 ${isArabic ? "flex-row-reverse text-right" : ""} ${!n.read ? "bg-primary/5 border-primary/20" : ""}`}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                     <Bell className={`h-4 w-4 mt-0.5 shrink-0 ${!n.read ? "text-primary" : "text-muted-foreground"}`} />
                     <div className="flex-1 min-w-0">
