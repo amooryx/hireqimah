@@ -99,7 +99,7 @@ const Settings = ({ user }: SettingsProps) => {
     input.click();
   };
 
-  const majors = studentProfile?.university ? (MAJORS_BY_UNI[studentProfile.university] || []) : [];
+  const majors = studentProfile?.university ? getMajorsForUniversity(studentProfile.university) : [];
 
   return (
     <div className="container py-6 max-w-2xl space-y-6">
