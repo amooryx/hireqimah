@@ -120,3 +120,21 @@ export async function fetchJobCache(sector?: string) {
   const { data } = await query;
   return data || [];
 }
+
+// ===== Fetch market skill rankings from job_market_data =====
+export async function fetchMarketSkillRankings(limit = 50, days = 30) {
+  const { data } = await supabase.rpc("get_market_skill_rankings", { _limit: limit, _days: days });
+  return data || [];
+}
+
+// ===== Fetch market cert rankings from job_market_data =====
+export async function fetchMarketCertRankings(limit = 30, days = 30) {
+  const { data } = await supabase.rpc("get_market_cert_rankings", { _limit: limit, _days: days });
+  return data || [];
+}
+
+// ===== Fetch student skill gaps vs market =====
+export async function fetchStudentSkillGaps(userId: string, limit = 20) {
+  const { data } = await supabase.rpc("get_student_skill_gaps", { _user_id: userId, _limit: limit });
+  return data || [];
+}

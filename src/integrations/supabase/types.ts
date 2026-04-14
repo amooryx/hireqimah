@@ -332,6 +332,54 @@ export type Database = {
         }
         Relationships: []
       }
+      job_market_data: {
+        Row: {
+          company: string | null
+          description: string | null
+          experience_level: string | null
+          expires_at: string | null
+          extracted_certifications: string[] | null
+          extracted_skills: string[] | null
+          id: string
+          location: string | null
+          scraped_at: string
+          sector: string | null
+          source: string | null
+          source_url: string | null
+          title: string
+        }
+        Insert: {
+          company?: string | null
+          description?: string | null
+          experience_level?: string | null
+          expires_at?: string | null
+          extracted_certifications?: string[] | null
+          extracted_skills?: string[] | null
+          id?: string
+          location?: string | null
+          scraped_at?: string
+          sector?: string | null
+          source?: string | null
+          source_url?: string | null
+          title: string
+        }
+        Update: {
+          company?: string | null
+          description?: string | null
+          experience_level?: string | null
+          expires_at?: string | null
+          extracted_certifications?: string[] | null
+          extracted_skills?: string[] | null
+          id?: string
+          location?: string | null
+          scraped_at?: string
+          sector?: string | null
+          source?: string | null
+          source_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       job_postings: {
         Row: {
           company: string | null
@@ -880,6 +928,31 @@ export type Database = {
           _student_user_id: string
         }
         Returns: Json
+      }
+      get_market_cert_rankings: {
+        Args: { _days?: number; _limit?: number }
+        Returns: {
+          cert_name: string
+          frequency: number
+          percentage: number
+        }[]
+      }
+      get_market_skill_rankings: {
+        Args: { _days?: number; _limit?: number }
+        Returns: {
+          frequency: number
+          percentage: number
+          skill_name: string
+        }[]
+      }
+      get_student_skill_gaps: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          is_missing: boolean
+          market_frequency: number
+          market_percentage: number
+          skill_name: string
+        }[]
       }
       get_university_region: { Args: { _university: string }; Returns: string }
       has_role: {
