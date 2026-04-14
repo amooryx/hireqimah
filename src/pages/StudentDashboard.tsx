@@ -100,9 +100,31 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
       .then(({ data }: any) => setBadges(data || []));
     untypedTable("activity_feed").select("*").order("created_at", { ascending: false }).limit(20)
       .then(({ data }: any) => setActivityFeed(data || []));
-    untypedTable("job_postings").select("*").eq("is_active", true).order("created_at", { ascending: false }).limit(20)
+    untypedTable("job_postings").select("*").eq("is_active", true).order("created_at", { ascending: false }).limit(50)
       .then(({ data }: any) => setJobPostings(data || []));
+    untypedTable("applications").select("*").eq("student_user_id", authUser.id)
+      .then(({ data }: any) => setApplications(data || []));
   }, [authUser.id]);
+
+  const handleApply = async (jobPostingId: string) => {
+    if (applications.some(a => a.job_posting_id === jobPostingId)) {
+      toast({ title: t("dash.alreadyApplied") }); return;
+    }
+    setApplyingTo(jobPostingId);
+    try {
+      const { error } = await untypedTable("applications").insert({
+        student_user_id: authUser.id,
+        job_posting_id: jobPostingId,
+        status: "applied",
+      });
+      if (error) throw error;
+      setApplications(prev => [...prev, { student_user_id: authUser.id, job_posting_id: jobPostingId, status: "applied" }]);
+      toast({ title: t("dash.applicationSent") });
+    } catch (e: any) {
+      toast({ title: t("dash.uploadFailed"), description: e.message, variant: "destructive" });
+    }
+    setApplyingTo(null);
+  };
 
   const handleFileUpload = useCallback((type: "transcript" | "certificate" | "project") => {
     const input = document.createElement("input");
