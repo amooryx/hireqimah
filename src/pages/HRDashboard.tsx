@@ -13,10 +13,11 @@ import ERSGauge from "@/components/ERSGauge";
 import { supabase } from "@/integrations/supabase/client";
 import { untypedTable } from "@/lib/untypedTable";
 import type { AuthUser } from "@/lib/supabaseAuth";
+import { useI18n } from "@/lib/i18n";
 import { SAUDI_UNIVERSITIES } from "@/lib/leaderboardConstants";
 import {
   Search, Users, BarChart3, Star, Award, Eye, TrendingUp, Briefcase,
-  CheckCircle, X, Info, ShieldCheck, MessageSquare, Calendar, Bell, Send, Target, Zap
+  CheckCircle, X, ShieldCheck, MessageSquare, Calendar, Bell, Send, Target, Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -29,6 +30,7 @@ import {
 interface HRDashboardProps { user: AuthUser; }
 
 function MarketTrustPanel() {
+  const { t } = useI18n();
   const [metrics, setMetrics] = useState<any>(null);
   useEffect(() => {
     Promise.all([
@@ -53,19 +55,19 @@ function MarketTrustPanel() {
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <div className="rounded-lg border bg-card p-3 text-center">
         <p className="text-xl font-bold text-primary">{metrics.jobsAnalyzed}</p>
-        <p className="text-[10px] text-muted-foreground">Jobs Analyzed</p>
+        <p className="text-[10px] text-muted-foreground">{t("hr.jobsAnalyzed")}</p>
       </div>
       <div className="rounded-lg border bg-card p-3 text-center">
         <p className="text-xl font-bold text-primary">{metrics.companiesAnalyzed}</p>
-        <p className="text-[10px] text-muted-foreground">Companies</p>
+        <p className="text-[10px] text-muted-foreground">{t("hr.companies")}</p>
       </div>
       <div className="rounded-lg border bg-card p-3 text-center">
         <p className="text-xl font-bold text-primary">{metrics.sourcesUsed.length}</p>
-        <p className="text-[10px] text-muted-foreground">Sources ({metrics.sourcesUsed.slice(0, 3).join(", ")})</p>
+        <p className="text-[10px] text-muted-foreground">{t("hr.sources")} ({metrics.sourcesUsed.slice(0, 3).join(", ")})</p>
       </div>
       <div className="rounded-lg border bg-card p-3 text-center">
         <p className="text-xs font-bold text-primary">{metrics.lastRefresh ? new Date(metrics.lastRefresh).toLocaleDateString() : "—"}</p>
-        <p className="text-[10px] text-muted-foreground">Last Refresh</p>
+        <p className="text-[10px] text-muted-foreground">{t("hr.lastRefresh")}</p>
       </div>
     </div>
   );
@@ -73,6 +75,8 @@ function MarketTrustPanel() {
 
 const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
   const { toast } = useToast();
+  const { t, lang, dir } = useI18n();
+  const isArabic = lang === "ar";
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [hrProfile, setHrProfile] = useState<any>(null);
@@ -100,6 +104,26 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
   const [smartMatchResults, setSmartMatchResults] = useState<any[] | null>(null);
   const [smartMatchLoading, setSmartMatchLoading] = useState(false);
   const [smartMatchJob, setSmartMatchJob] = useState<any>(null);
+
+  const stageLabel = (stage: string) => {
+    const map: Record<string, string> = {
+      discovered: t("hr.stageDiscovered"),
+      shortlisted: t("hr.stageShortlisted"),
+      interview: t("hr.stageInterview"),
+      offer: t("hr.stageOffer"),
+      hired: t("hr.stageHired"),
+    };
+    return map[stage] || stage;
+  };
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      requested: t("dash.statusRequested"),
+      accepted: t("dash.statusAccepted"),
+      declined: t("dash.statusDeclined"),
+    };
+    return map[status] || status;
+  };
 
   const loadDashboard = useCallback(async () => {
     const [{ data: hr }, { data: students }, { data: sl }, { data: majorsList }, { data: certs }, { data: sCerts }, { data: ivs }, { data: jp }, { data: notifs }, { data: pipelineData }] = await Promise.all([
@@ -134,7 +158,6 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
-  // Realtime
   useEffect(() => {
     const channel = supabase
       .channel('hr-realtime')
@@ -153,17 +176,16 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
     const exists = shortlists.find(s => s.student_user_id === studentUserId);
     if (exists) {
       await supabase.from("hr_shortlists").delete().eq("id", exists.id);
-      toast({ title: "Removed from shortlist" });
+      toast({ title: t("hr.removedFromShortlist") });
     } else {
       await supabase.from("hr_shortlists").insert({ hr_user_id: authUser.id, student_user_id: studentUserId });
-      // Notify student
       await untypedTable("notifications").insert({
         user_id: studentUserId,
         type: "shortlisted",
-        title: "You've been shortlisted!",
-        body: `${hrProfile?.company_name || "A company"} has added you to their shortlist.`,
+        title: t("hr.notifiedShortlisted"),
+        body: `${hrProfile?.company_name || t("hr.companies")} ${isArabic ? "أضافتك للقائمة المختصرة." : "has added you to their shortlist."}`,
       });
-      toast({ title: "Added to shortlist" });
+      toast({ title: t("hr.addedToShortlist") });
     }
     const { data: sl } = await supabase.from("hr_shortlists").select("*").eq("hr_user_id", authUser.id);
     setShortlists(sl || []);
@@ -180,14 +202,14 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
 
   const movePipelineStage = async (entryId: string, newStage: string) => {
     await untypedTable("hr_candidate_pipeline").update({ stage: newStage }).eq("id", entryId);
-    toast({ title: `Moved to ${newStage}` });
+    toast({ title: t("hr.movedTo", { stage: stageLabel(newStage) }) });
     loadDashboard();
   };
 
   const addToPipeline = async (studentUserId: string, jobTitle?: string) => {
     const exists = pipeline.find((p: any) => p.student_user_id === studentUserId && p.job_title === (jobTitle || null));
     if (exists) {
-      toast({ title: "Already in pipeline" });
+      toast({ title: t("hr.alreadyInPipeline") });
       return;
     }
     await untypedTable("hr_candidate_pipeline").insert({
@@ -199,10 +221,10 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
     await untypedTable("notifications").insert({
       user_id: studentUserId,
       type: "pipeline",
-      title: "You've been discovered!",
-      body: `${hrProfile?.company_name || "A company"} added you to their hiring pipeline.`,
+      title: t("hr.notifiedDiscovered"),
+      body: `${hrProfile?.company_name || t("hr.companies")} ${isArabic ? "أضافتك لمسار التوظيف." : "added you to their hiring pipeline."}`,
     });
-    toast({ title: "Added to pipeline" });
+    toast({ title: t("hr.addedToPipeline") });
     loadDashboard();
   };
 
@@ -211,15 +233,15 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
     await untypedTable("interview_requests").insert({
       hr_user_id: authUser.id,
       student_user_id: interviewDialog.user_id,
-      job_title: interviewTitle || "Interview Request",
+      job_title: interviewTitle || t("hr.requestInterview"),
       job_description: interviewDesc || null,
       status: "requested",
     });
     await untypedTable("notifications").insert({
       user_id: interviewDialog.user_id,
       type: "interview_request",
-      title: "New Interview Request",
-      body: `${hrProfile?.company_name || "A company"} wants to interview you for "${interviewTitle || "a position"}".`,
+      title: t("hr.newInterviewRequest"),
+      body: `${hrProfile?.company_name || t("hr.companies")} ${isArabic ? `تريد مقابلتك لوظيفة "${interviewTitle || ""}"` : `wants to interview you for "${interviewTitle || "a position"}".`}`,
     });
     await supabase.from("audit_logs").insert({
       user_id: authUser.id,
@@ -228,7 +250,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
       resource_id: interviewDialog.user_id,
       details: { student_name: interviewDialog.profiles?.full_name, job_title: interviewTitle },
     });
-    toast({ title: "Interview request sent" });
+    toast({ title: t("hr.interviewSent") });
     setInterviewDialog(null);
     setInterviewTitle("");
     setInterviewDesc("");
@@ -245,13 +267,14 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
     await untypedTable("notifications").insert({
       user_id: messageDialog.user_id,
       type: "message",
-      title: "New Message",
-      body: `${hrProfile?.company_name || "A recruiter"} sent you a message.`,
+      title: t("hr.newMessage"),
+      body: `${hrProfile?.company_name || t("hr.companies")} ${isArabic ? "أرسلت لك رسالة." : "sent you a message."}`,
     });
-    toast({ title: "Message sent" });
+    toast({ title: t("hr.messageSent") });
     setMessageDialog(null);
     setMessageText("");
   };
+
   const createJobPosting = async () => {
     await untypedTable("job_postings").insert({
       hr_user_id: authUser.id,
@@ -263,7 +286,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
       required_skills: jobForm.required_skills ? jobForm.required_skills.split(",").map((s: string) => s.trim()).filter(Boolean) : [],
       min_ers_score: jobForm.min_ers_score ? parseInt(jobForm.min_ers_score) : 0,
     });
-    toast({ title: "Job posting created" });
+    toast({ title: t("hr.jobPostingCreated") });
     setShowJobForm(false);
     setJobForm({ title: "", description: "", location: "Saudi Arabia", sector: "", required_skills: "", min_ers_score: "" });
     loadDashboard();
@@ -286,14 +309,14 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
       setSmartMatchResults(data?.candidates || []);
     } catch (e) {
       console.error("Smart match error:", e);
-      toast({ title: "Smart Match failed", variant: "destructive" });
+      toast({ title: t("hr.smartMatchFailed"), variant: "destructive" });
     }
     setSmartMatchLoading(false);
   };
 
   if (loading) {
     return (
-      <div className="container py-6 space-y-6">
+      <div dir={dir} className={`container py-6 space-y-6 ${isArabic ? "text-right" : "text-left"}`}>
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -317,31 +340,30 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
 
   const avgERS = candidates.length > 0
     ? Math.round(candidates.reduce((a, s) => a + (s.ers_score || 0), 0) / candidates.length) : 0;
-  const topTalent = candidates.filter(s => (s.ers_score || 0) > 85).length;
 
   return (
-    <div className="container py-6 space-y-6">
+    <div dir={dir} className={`container py-6 space-y-6 ${isArabic ? "text-right" : "text-left"}`}>
       <div>
-        <h1 className="text-2xl font-bold font-heading">HR Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Welcome, {authUser.full_name} — {hrProfile?.company_name || "Company"}</p>
+        <h1 className="text-2xl font-bold font-heading">{t("hr.dashTitle")}</h1>
+        <p className="text-muted-foreground text-sm">{t("hr.welcome", { name: authUser.full_name, company: hrProfile?.company_name || "" })}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard icon={Users} label="Candidates" value={candidates.length} delay={0} />
-        <StatCard icon={TrendingUp} label="Avg ERS" value={avgERS} delay={0.1} />
-        <StatCard icon={Star} label="In Pipeline" value={pipeline.length} delay={0.2} />
-        <StatCard icon={Calendar} label="Interviews" value={interviews.length} delay={0.3} />
-        <StatCard icon={CheckCircle} label="Hired" value={pipeline.filter((p: any) => p.stage === "hired").length} delay={0.4} />
+        <StatCard icon={Users} label={t("hr.candidates")} value={candidates.length} delay={0} />
+        <StatCard icon={TrendingUp} label={t("hr.avgERS")} value={avgERS} delay={0.1} />
+        <StatCard icon={Star} label={t("hr.inPipeline")} value={pipeline.length} delay={0.2} />
+        <StatCard icon={Calendar} label={t("dash.interviews")} value={interviews.length} delay={0.3} />
+        <StatCard icon={CheckCircle} label={t("hr.hired")} value={pipeline.filter((p: any) => p.stage === "hired").length} delay={0.4} />
       </div>
 
       <Tabs defaultValue="search" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="search"><Search className="h-4 w-4 mr-1 hidden sm:inline" />Candidates</TabsTrigger>
-          <TabsTrigger value="pipeline"><Target className="h-4 w-4 mr-1 hidden sm:inline" />Pipeline</TabsTrigger>
-          <TabsTrigger value="shortlist"><Star className="h-4 w-4 mr-1 hidden sm:inline" />Shortlist</TabsTrigger>
-          <TabsTrigger value="jobs"><Briefcase className="h-4 w-4 mr-1 hidden sm:inline" />Jobs</TabsTrigger>
-          <TabsTrigger value="interviews"><Calendar className="h-4 w-4 mr-1 hidden sm:inline" />Interviews</TabsTrigger>
-          <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-1 hidden sm:inline" />Analytics</TabsTrigger>
+        <TabsList dir={dir} className="grid w-full grid-cols-6">
+          <TabsTrigger value="search"><Search className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("hr.candidates")}</TabsTrigger>
+          <TabsTrigger value="pipeline"><Target className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("hr.pipeline")}</TabsTrigger>
+          <TabsTrigger value="shortlist"><Star className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("hr.shortlisted")}</TabsTrigger>
+          <TabsTrigger value="jobs"><Briefcase className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("hr.postings")}</TabsTrigger>
+          <TabsTrigger value="interviews"><Calendar className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("dash.interviews")}</TabsTrigger>
+          <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 ltr:mr-1 rtl:ml-1 hidden sm:inline" />{t("hr.analytics")}</TabsTrigger>
         </TabsList>
 
         {/* Search */}
@@ -349,71 +371,71 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
           <div className="rounded-xl border bg-card p-6">
             <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by name..." className="pl-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} maxLength={100} />
+                <Search className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ${isArabic ? "right-3" : "left-3"}`} />
+                <Input placeholder={t("hr.searchByName")} className={isArabic ? "pr-9" : "pl-9"} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} maxLength={100} />
               </div>
-              <Input placeholder="Min ERS" type="number" min={0} max={100} value={minERS} onChange={e => setMinERS(e.target.value)} />
+              <Input placeholder={t("hr.minERSPlaceholder")} type="number" min={0} max={100} value={minERS} onChange={e => setMinERS(e.target.value)} />
               <Select value={filterUni} onValueChange={setFilterUni}>
-                <SelectTrigger><SelectValue placeholder="University" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("hr.filterUni")} /></SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="all">All Universities</SelectItem>
+                  <SelectItem value="all">{t("hr.allUniversities")}</SelectItem>
                   {SAUDI_UNIVERSITIES.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={filterMajor} onValueChange={setFilterMajor}>
-                <SelectTrigger><SelectValue placeholder="Major" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("hr.filterMajor")} /></SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="all">All Majors</SelectItem>
+                  <SelectItem value="all">{t("hr.allMajors")}</SelectItem>
                   {majors.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={filterCert} onValueChange={setFilterCert}>
-                <SelectTrigger><SelectValue placeholder="Certification" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("hr.certifications")} /></SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="all">All Certifications</SelectItem>
+                  <SelectItem value="all">{t("hr.allCertifications")}</SelectItem>
                   {certNames.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <div className="text-sm text-muted-foreground flex items-center">{filtered.length} results</div>
+              <div className="text-sm text-muted-foreground flex items-center">{t("hr.results", { count: filtered.length })}</div>
             </div>
             <div className="space-y-3">
               {filtered.slice(0, 50).map((s, i) => {
                 const isShortlisted = shortlists.some(sl => sl.student_user_id === s.user_id);
                 return (
-                  <motion.div key={s.user_id} className="flex flex-col sm:flex-row sm:items-center gap-4 rounded-lg border p-4 hover:bg-muted/30 transition-colors"
+                  <motion.div key={s.user_id} className={`flex flex-col sm:flex-row sm:items-center gap-4 rounded-lg border p-4 hover:bg-muted/30 transition-colors ${isArabic ? "sm:flex-row-reverse text-right" : ""}`}
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{s.profiles?.full_name || "Student"}</span>
-                        {s.onboarding_completed && <Badge className="text-[10px] bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">Verified</Badge>}
+                      <div className={`flex items-center gap-2 flex-wrap ${isArabic ? "justify-end" : ""}`}>
+                        <span className="font-medium text-sm">{s.profiles?.full_name || t("hr.student")}</span>
+                        {s.onboarding_completed && <Badge className="text-[10px] bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]">{t("dash.verified")}</Badge>}
                       </div>
-                      <p className="text-xs text-muted-foreground">{s.university} · {s.major} · GPA {s.gpa}/{s.gpa_scale === "5" ? "5.0" : "4.0"}</p>
+                      <p className="text-xs text-muted-foreground">{s.university} · {s.major} · {t("hr.gpa")} {s.gpa}/{s.gpa_scale === "5" ? "5.0" : "4.0"}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-center mr-2">
+                    <div className={`flex items-center gap-2 ${isArabic ? "flex-row-reverse" : ""}`}>
+                      <div className="text-center ltr:mr-2 rtl:ml-2">
                         <p className="text-xl font-bold text-primary">{Math.round(s.ers_score || 0)}</p>
                         <p className="text-[10px] text-muted-foreground">ERS</p>
                       </div>
-                      <Button size="sm" variant={isShortlisted ? "default" : "outline"} onClick={() => handleShortlist(s.user_id)} title="Shortlist">
+                      <Button size="sm" variant={isShortlisted ? "default" : "outline"} onClick={() => handleShortlist(s.user_id)}>
                         <Star className={`h-4 w-4 ${isShortlisted ? "fill-current" : ""}`} />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => addToPipeline(s.user_id)} title="Add to Pipeline">
+                      <Button size="sm" variant="outline" onClick={() => addToPipeline(s.user_id)}>
                         <Target className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setViewingProfile(s)} title="View Profile">
+                      <Button size="sm" variant="outline" onClick={() => setViewingProfile(s)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setInterviewDialog(s)} title="Request Interview">
+                      <Button size="sm" variant="outline" onClick={() => setInterviewDialog(s)}>
                         <Calendar className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setMessageDialog(s)} title="Send Message">
+                      <Button size="sm" variant="outline" onClick={() => setMessageDialog(s)}>
                         <MessageSquare className="h-4 w-4" />
                       </Button>
                     </div>
                   </motion.div>
                 );
               })}
-              {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No candidates match your filters.</p>}
+              {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">{t("hr.noCandidates")}</p>}
             </div>
           </div>
         </TabsContent>
@@ -421,19 +443,19 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
         {/* Pipeline */}
         <TabsContent value="pipeline">
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Hiring Pipeline</h3>
+            <h3 className="text-lg font-semibold font-heading mb-4">{t("hr.hiringPipeline")}</h3>
             <div className="flex flex-wrap gap-2 mb-6">
               {PIPELINE_STAGES.map(stage => {
                 const count = pipeline.filter((p: any) => p.stage === stage).length;
                 return (
-                  <Badge key={stage} variant="outline" className={`${STAGE_COLORS[stage]} capitalize px-3 py-1`}>
-                    {stage} ({count})
+                  <Badge key={stage} variant="outline" className={`${STAGE_COLORS[stage]} px-3 py-1`}>
+                    {stageLabel(stage)} ({count})
                   </Badge>
                 );
               })}
             </div>
             {pipeline.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No candidates in pipeline. Add from Candidates tab.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("hr.noPipelineCandidates")}</p>
             ) : (
               <div className="space-y-4">
                 {PIPELINE_STAGES.map(stage => {
@@ -442,26 +464,26 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                   const stageIdx = PIPELINE_STAGES.indexOf(stage);
                   return (
                     <div key={stage}>
-                      <h4 className="text-sm font-semibold capitalize mb-2 flex items-center gap-2">
+                      <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                         <span className={`inline-block w-2 h-2 rounded-full ${stage === 'hired' ? 'bg-[hsl(var(--deep-green))]' : stage === 'offer' ? 'bg-[hsl(var(--success))]' : stage === 'interview' ? 'bg-[hsl(var(--primary))]' : 'bg-primary'}`} />
-                        {stage} ({stageEntries.length})
+                        {stageLabel(stage)} ({stageEntries.length})
                       </h4>
                       {stageEntries.map((entry: any) => {
                         const student = candidates.find(c => c.user_id === entry.student_user_id);
                         return (
-                          <motion.div key={entry.id} className="flex items-center gap-3 rounded-lg border p-3 mb-2"
+                          <motion.div key={entry.id} className={`flex items-center gap-3 rounded-lg border p-3 mb-2 ${isArabic ? "flex-row-reverse text-right" : ""}`}
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm">{student?.profiles?.full_name || "Student"}</p>
-                              <p className="text-xs text-muted-foreground">{entry.job_title || "General"} · {student?.university || ""}</p>
+                              <p className="font-medium text-sm">{student?.profiles?.full_name || t("hr.student")}</p>
+                              <p className="text-xs text-muted-foreground">{entry.job_title || t("dash.general")} · {student?.university || ""}</p>
                             </div>
                             {student && <p className="font-bold text-primary text-sm">{Math.round(student.ers_score || 0)}</p>}
                             <div className="flex gap-1">
                               {stageIdx > 0 && (
-                                <Button size="sm" variant="ghost" className="text-xs" onClick={() => movePipelineStage(entry.id, PIPELINE_STAGES[stageIdx - 1])}>← Back</Button>
+                                <Button size="sm" variant="ghost" className="text-xs" onClick={() => movePipelineStage(entry.id, PIPELINE_STAGES[stageIdx - 1])}>{t("hr.backBtn")}</Button>
                               )}
                               {stageIdx < PIPELINE_STAGES.length - 1 && (
-                                <Button size="sm" variant="outline" className="text-xs" onClick={() => movePipelineStage(entry.id, PIPELINE_STAGES[stageIdx + 1])}>→ {PIPELINE_STAGES[stageIdx + 1]}</Button>
+                                <Button size="sm" variant="outline" className="text-xs" onClick={() => movePipelineStage(entry.id, PIPELINE_STAGES[stageIdx + 1])}>→ {stageLabel(PIPELINE_STAGES[stageIdx + 1])}</Button>
                               )}
                             </div>
                           </motion.div>
@@ -478,19 +500,19 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
         {/* Shortlist */}
         <TabsContent value="shortlist">
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Shortlisted Candidates ({shortlists.length})</h3>
+            <h3 className="text-lg font-semibold font-heading mb-4">{t("hr.shortlistedCount", { count: shortlists.length })}</h3>
             {shortlists.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No candidates shortlisted yet.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("hr.noShortlistYet")}</p>
             ) : (
               <div className="space-y-3">
                 {shortlists.map((sl, i) => {
                   const student = candidates.find(c => c.user_id === sl.student_user_id);
                   if (!student) return null;
                   return (
-                    <motion.div key={sl.id} className="flex items-center gap-4 rounded-lg border p-4"
+                    <motion.div key={sl.id} className={`flex items-center gap-4 rounded-lg border p-4 ${isArabic ? "flex-row-reverse text-right" : ""}`}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{student.profiles?.full_name || "Student"}</p>
+                        <p className="font-medium text-sm">{student.profiles?.full_name || t("hr.student")}</p>
                         <p className="text-xs text-muted-foreground">{student.university} · {student.major}</p>
                       </div>
                       <p className="font-bold text-primary">{Math.round(student.ers_score || 0)} ERS</p>
@@ -508,53 +530,53 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
         {/* Job Postings */}
         <TabsContent value="jobs">
           <div className="rounded-xl border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold font-heading">Job Postings ({jobPostings.length})</h3>
+            <div className={`flex items-center justify-between mb-4 ${isArabic ? "flex-row-reverse" : ""}`}>
+              <h3 className="text-lg font-semibold font-heading">{t("hr.jobPostingsCount", { count: jobPostings.length })}</h3>
               <Button size="sm" onClick={() => setShowJobForm(!showJobForm)}>
-                {showJobForm ? "Cancel" : "+ New Posting"}
+                {showJobForm ? t("hr.cancelBtn") : t("hr.newPosting")}
               </Button>
             </div>
             {showJobForm && (
               <div className="rounded-lg border p-4 mb-4 space-y-3">
-                <Input placeholder="Job Title *" value={jobForm.title} onChange={e => setJobForm(f => ({...f, title: e.target.value}))} maxLength={200} />
-                <Textarea placeholder="Job Description" value={jobForm.description} onChange={e => setJobForm(f => ({...f, description: e.target.value}))} maxLength={2000} />
+                <Input placeholder={t("hr.jobTitleRequired")} value={jobForm.title} onChange={e => setJobForm(f => ({...f, title: e.target.value}))} maxLength={200} />
+                <Textarea placeholder={t("hr.jobDescPlaceholder")} value={jobForm.description} onChange={e => setJobForm(f => ({...f, description: e.target.value}))} maxLength={2000} />
                 <div className="grid sm:grid-cols-3 gap-3">
-                  <Input placeholder="Location" value={jobForm.location} onChange={e => setJobForm(f => ({...f, location: e.target.value}))} />
-                  <Input placeholder="Sector" value={jobForm.sector} onChange={e => setJobForm(f => ({...f, sector: e.target.value}))} />
-                  <Input placeholder="Min ERS" type="number" min={0} max={100} value={jobForm.min_ers_score} onChange={e => setJobForm(f => ({...f, min_ers_score: e.target.value}))} />
+                  <Input placeholder={t("hr.locationPlaceholder")} value={jobForm.location} onChange={e => setJobForm(f => ({...f, location: e.target.value}))} />
+                  <Input placeholder={t("hr.sectorPlaceholder")} value={jobForm.sector} onChange={e => setJobForm(f => ({...f, sector: e.target.value}))} />
+                  <Input placeholder={t("hr.minERSPlaceholder")} type="number" min={0} max={100} value={jobForm.min_ers_score} onChange={e => setJobForm(f => ({...f, min_ers_score: e.target.value}))} />
                 </div>
-                <Input placeholder="Required Skills (comma-separated)" value={jobForm.required_skills} onChange={e => setJobForm(f => ({...f, required_skills: e.target.value}))} />
+                <Input placeholder={t("hr.skillsComma")} value={jobForm.required_skills} onChange={e => setJobForm(f => ({...f, required_skills: e.target.value}))} />
                 <Button onClick={createJobPosting} disabled={!jobForm.title.trim()}>
-                  <Send className="h-4 w-4 mr-1" />Publish Job
+                  <Send className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.publishJob")}
                 </Button>
               </div>
             )}
             {jobPostings.length === 0 && !showJobForm ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No job postings yet. Create one to find matching candidates.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("hr.noPostingsYet")}</p>
             ) : (
               <div className="space-y-3">
                 {jobPostings.map((jp: any, i: number) => (
                   <motion.div key={jp.id} className="rounded-lg border p-4"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                    <div className="flex items-start justify-between gap-3">
+                    <div className={`flex items-start justify-between gap-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${isArabic ? "justify-end" : ""}`}>
                           <p className="font-medium text-sm">{jp.title}</p>
-                          <Badge variant={jp.is_active ? "default" : "outline"} className="text-[10px]">{jp.is_active ? "Active" : "Closed"}</Badge>
+                          <Badge variant={jp.is_active ? "default" : "outline"} className="text-[10px]">{jp.is_active ? t("hr.active") : t("hr.closed")}</Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">{jp.company || "—"} · {jp.location} · {jp.sector || "General"}</p>
-                        {jp.min_ers_score > 0 && <p className="text-xs text-muted-foreground">Min ERS: {jp.min_ers_score}</p>}
+                        <p className="text-xs text-muted-foreground">{jp.company || "—"} · {jp.location} · {jp.sector || t("dash.general")}</p>
+                        {jp.min_ers_score > 0 && <p className="text-xs text-muted-foreground">{t("hr.minERS")}: {jp.min_ers_score}</p>}
                         {jp.required_skills?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
+                          <div className={`flex flex-wrap gap-1 mt-1 ${isArabic ? "justify-end" : ""}`}>
                             {jp.required_skills.map((s: string) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className={`flex items-center gap-2 ${isArabic ? "flex-row-reverse" : ""}`}>
                         <Button size="sm" variant="outline" onClick={() => runSmartMatch(jp)} disabled={smartMatchLoading}>
-                          <Zap className="h-4 w-4 mr-1" />Smart Match
+                          <Zap className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.smartMatch")}
                         </Button>
-                        <p className="text-xs text-muted-foreground">{new Date(jp.created_at).toLocaleDateString()}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(jp.created_at).toLocaleDateString(isArabic ? "ar-SA" : "en-US")}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -566,9 +588,9 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
 
         <TabsContent value="interviews">
           <div className="rounded-xl border bg-card p-6">
-            <h3 className="text-lg font-semibold font-heading mb-4">Interview Pipeline ({interviews.length})</h3>
+            <h3 className="text-lg font-semibold font-heading mb-4">{t("hr.interviewPipeline", { count: interviews.length })}</h3>
             {interviews.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No interviews yet. Send requests from the Candidates tab.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("hr.noInterviewsYet")}</p>
             ) : (
               <div className="space-y-3">
                 {interviews.map((iv, i) => {
@@ -576,17 +598,17 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                   return (
                     <motion.div key={iv.id} className="rounded-lg border p-4"
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                      <div className="flex items-center justify-between gap-3">
+                      <div className={`flex items-center justify-between gap-3 ${isArabic ? "flex-row-reverse text-right" : ""}`}>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{student?.profiles?.full_name || "Student"}</p>
+                          <div className={`flex items-center gap-2 ${isArabic ? "justify-end" : ""}`}>
+                            <p className="font-medium text-sm">{student?.profiles?.full_name || t("hr.student")}</p>
                             <Badge variant={
                               iv.status === "requested" ? "default" :
                               iv.status === "accepted" ? "secondary" :
                               iv.status === "declined" ? "destructive" : "outline"
-                            } className="text-[10px]">{iv.status}</Badge>
+                            } className="text-[10px]">{statusLabel(iv.status)}</Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground">{iv.job_title || "—"} · {new Date(iv.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground">{iv.job_title || "—"} · {new Date(iv.created_at).toLocaleDateString(isArabic ? "ar-SA" : "en-US")}</p>
                         </div>
                         {student && <p className="font-bold text-primary">{Math.round(student.ers_score || 0)} ERS</p>}
                       </div>
@@ -600,27 +622,24 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
 
         <TabsContent value="analytics">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* HR Trust Mode - Market Validation */}
             <div className="rounded-xl border bg-primary/5 p-6 md:col-span-2">
               <h3 className="font-semibold font-heading mb-3 flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                Market Validation — HR Trust Mode
+                {t("hr.marketValidation")}
               </h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                All ERS scores and rankings are driven by real-time Saudi labor market data, not static certification lists.
-              </p>
+              <p className="text-xs text-muted-foreground mb-4">{t("hr.marketValidationDesc")}</p>
               <MarketTrustPanel />
             </div>
 
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold font-heading mb-4">Recruiter Activity</h3>
+              <h3 className="font-semibold font-heading mb-4">{t("hr.recruiterActivity")}</h3>
               <div className="space-y-4">
                 {[
-                  { label: "Candidates Viewed", value: candidates.length },
-                  { label: "Shortlisted", value: shortlists.length },
-                  { label: "Interviews Requested", value: interviews.length },
-                  { label: "Interviews Accepted", value: interviews.filter(i => i.status === "accepted").length },
-                  { label: "Avg ERS of Shortlisted", value: (() => {
+                  { label: t("hr.candidatesViewed"), value: candidates.length },
+                  { label: t("hr.shortlisted"), value: shortlists.length },
+                  { label: t("hr.interviewsRequested"), value: interviews.length },
+                  { label: t("hr.interviewsAccepted"), value: interviews.filter(i => i.status === "accepted").length },
+                  { label: t("hr.avgERSShortlisted"), value: (() => {
                     const slStudents = shortlists.map(s => candidates.find(c => c.user_id === s.student_user_id)).filter(Boolean);
                     return slStudents.length > 0 ? Math.round(slStudents.reduce((a, s) => a + (s?.ers_score || 0), 0) / slStudents.length) : 0;
                   })() },
@@ -633,12 +652,12 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
               </div>
               {interviews.filter(i => i.status === "accepted").length > 0 && (
                 <div className="mt-4 p-3 rounded-lg bg-[hsl(var(--success))]/5 border border-[hsl(var(--success))]/20">
-                  <p className="text-xs text-[hsl(var(--success))]">💡 Candidates with ERS above 80 had 3x higher interview acceptance rates.</p>
+                  <p className="text-xs text-[hsl(var(--success))]">💡 {t("hr.highERSTip")}</p>
                 </div>
               )}
             </div>
             <div className="rounded-xl border bg-card p-6">
-              <h3 className="font-semibold font-heading mb-4">ERS Distribution</h3>
+              <h3 className="font-semibold font-heading mb-4">{t("hr.ersDistribution")}</h3>
               <div className="space-y-3">
                 {[
                   { range: "90-100", count: candidates.filter(s => s.ers_score >= 90).length },
@@ -658,17 +677,17 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
               </div>
             </div>
             <div className="rounded-xl border bg-card p-6 md:col-span-2">
-              <h3 className="font-semibold font-heading mb-4">Top Majors by Avg ERS</h3>
+              <h3 className="font-semibold font-heading mb-4">{t("hr.topMajorsByERS")}</h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[...new Set(candidates.map(c => c.major))].map(major => {
                   const group = candidates.filter(c => c.major === major);
                   const avg = Math.round(group.reduce((a, s) => a + (s.ers_score || 0), 0) / group.length);
                   return { major, avg, count: group.length };
                 }).sort((a, b) => b.avg - a.avg).slice(0, 9).map((m) => (
-                  <div key={m.major} className="flex items-center justify-between rounded-lg border p-3">
+                  <div key={m.major} className={`flex items-center justify-between rounded-lg border p-3 ${isArabic ? "flex-row-reverse" : ""}`}>
                     <div>
                       <p className="text-sm font-medium">{m.major}</p>
-                      <p className="text-xs text-muted-foreground">{m.count} students</p>
+                      <p className="text-xs text-muted-foreground">{t("uniDash.studentsLabel", { count: m.count })}</p>
                     </div>
                     <p className="font-bold text-primary">{m.avg}</p>
                   </div>
@@ -684,8 +703,8 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setViewingProfile(null)}>
           <motion.div className="bg-card rounded-xl border shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold font-heading">{viewingProfile.profiles?.full_name || "Student Profile"}</h3>
+            <div className={`flex items-center justify-between mb-4 ${isArabic ? "flex-row-reverse" : ""}`}>
+              <h3 className="text-lg font-bold font-heading">{viewingProfile.profiles?.full_name || t("hr.studentProfile")}</h3>
               <Button size="sm" variant="ghost" onClick={() => setViewingProfile(null)}><X className="h-4 w-4" /></Button>
             </div>
             <div className="space-y-3">
@@ -693,19 +712,19 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                 <ERSGauge score={Math.round(viewingProfile.ers_score || 0)} size={140} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">University</p><p className="text-sm font-medium">{viewingProfile.university}</p></div>
-                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Major</p><p className="text-sm font-medium">{viewingProfile.major}</p></div>
-                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">GPA</p><p className="text-sm font-medium">{viewingProfile.gpa}/{viewingProfile.gpa_scale === "5" ? "5.0" : "4.0"}</p></div>
-                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Career Target</p><p className="text-sm font-medium">{viewingProfile.career_target || "—"}</p></div>
+                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{t("hr.filterUni")}</p><p className="text-sm font-medium">{viewingProfile.university}</p></div>
+                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{t("hr.filterMajor")}</p><p className="text-sm font-medium">{viewingProfile.major}</p></div>
+                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{t("hr.gpa")}</p><p className="text-sm font-medium">{viewingProfile.gpa}/{viewingProfile.gpa_scale === "5" ? "5.0" : "4.0"}</p></div>
+                <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">{t("hr.careerTarget")}</p><p className="text-sm font-medium">{viewingProfile.career_target || "—"}</p></div>
               </div>
               <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground mb-2">Score Breakdown</p>
+                <p className="text-xs text-muted-foreground mb-2">{t("hr.scoreBreakdown")}</p>
                 {[
-                  { label: "Academic", value: viewingProfile.academic_score || 0 },
-                  { label: "Certifications", value: viewingProfile.certification_score || 0 },
-                  { label: "Projects", value: viewingProfile.project_score || 0 },
-                  { label: "Soft Skills", value: viewingProfile.soft_skills_score || 0 },
-                  { label: "Conduct", value: viewingProfile.conduct_score || 0 },
+                  { label: t("hr.academic"), value: viewingProfile.academic_score || 0 },
+                  { label: t("hr.certifications"), value: viewingProfile.certification_score || 0 },
+                  { label: t("hr.projects"), value: viewingProfile.project_score || 0 },
+                  { label: t("hr.softSkills"), value: viewingProfile.soft_skills_score || 0 },
+                  { label: t("hr.conduct"), value: viewingProfile.conduct_score || 0 },
                 ].map(item => (
                   <div key={item.label} className="mb-2">
                     <div className="flex justify-between text-xs mb-1">
@@ -718,10 +737,10 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
               </div>
               <div className="flex gap-2">
                 <Button className="flex-1" onClick={() => { setViewingProfile(null); setInterviewDialog(viewingProfile); }}>
-                  <Calendar className="h-4 w-4 mr-1" />Request Interview
+                  <Calendar className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.requestInterview")}
                 </Button>
                 <Button variant="outline" className="flex-1" onClick={() => { setViewingProfile(null); setMessageDialog(viewingProfile); }}>
-                  <MessageSquare className="h-4 w-4 mr-1" />Message
+                  <MessageSquare className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.sendMessage")}
                 </Button>
               </div>
             </div>
@@ -733,16 +752,16 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
       <Dialog open={!!interviewDialog} onOpenChange={() => setInterviewDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Request Interview</DialogTitle>
-            <DialogDescription>Send an interview request to {interviewDialog?.profiles?.full_name || "this student"}.</DialogDescription>
+            <DialogTitle>{t("hr.requestInterviewTitle")}</DialogTitle>
+            <DialogDescription>{t("hr.requestInterviewDesc", { name: interviewDialog?.profiles?.full_name || t("hr.student") })}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Input placeholder="Job Title / Position" value={interviewTitle} onChange={e => setInterviewTitle(e.target.value)} maxLength={200} />
-            <Textarea placeholder="Job description or notes (optional)" value={interviewDesc} onChange={e => setInterviewDesc(e.target.value)} maxLength={1000} />
+            <Input placeholder={t("hr.jobTitlePosition")} value={interviewTitle} onChange={e => setInterviewTitle(e.target.value)} maxLength={200} />
+            <Textarea placeholder={t("hr.jobDescNotes")} value={interviewDesc} onChange={e => setInterviewDesc(e.target.value)} maxLength={1000} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setInterviewDialog(null)}>Cancel</Button>
-            <Button onClick={sendInterviewRequest}><Send className="h-4 w-4 mr-1" />Send Request</Button>
+            <Button variant="outline" onClick={() => setInterviewDialog(null)}>{t("common.cancel")}</Button>
+            <Button onClick={sendInterviewRequest}><Send className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.sendRequest")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -751,13 +770,13 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
       <Dialog open={!!messageDialog} onOpenChange={() => setMessageDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Message {messageDialog?.profiles?.full_name || "Student"}</DialogTitle>
-            <DialogDescription>Send a direct message to this candidate.</DialogDescription>
+            <DialogTitle>{t("hr.messageStudent", { name: messageDialog?.profiles?.full_name || t("hr.student") })}</DialogTitle>
+            <DialogDescription>{t("hr.messageStudentDesc")}</DialogDescription>
           </DialogHeader>
-          <Textarea placeholder="Type your message..." value={messageText} onChange={e => setMessageText(e.target.value)} maxLength={2000} rows={4} />
+          <Textarea placeholder={t("hr.typeMessage")} value={messageText} onChange={e => setMessageText(e.target.value)} maxLength={2000} rows={4} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMessageDialog(null)}>Cancel</Button>
-            <Button onClick={sendMessage} disabled={!messageText.trim()}><Send className="h-4 w-4 mr-1" />Send</Button>
+            <Button variant="outline" onClick={() => setMessageDialog(null)}>{t("common.cancel")}</Button>
+            <Button onClick={sendMessage} disabled={!messageText.trim()}><Send className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.send")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -768,11 +787,9 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
-              Smart Match Results {smartMatchJob && `— ${smartMatchJob.title}`}
+              {t("hr.smartMatchResults")} {smartMatchJob && `— ${smartMatchJob.title}`}
             </DialogTitle>
-            <DialogDescription>
-              Candidates ranked by Job-Fit Score based on skill overlap, certifications, and ERS.
-            </DialogDescription>
+            <DialogDescription>{t("hr.smartMatchDesc")}</DialogDescription>
           </DialogHeader>
           {smartMatchLoading ? (
             <div className="space-y-3">
@@ -781,7 +798,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
           ) : (
             <div className="space-y-3">
               {(smartMatchResults || []).map((c: any, i: number) => (
-                <motion.div key={c.user_id} className="flex items-center gap-4 rounded-lg border p-4"
+                <motion.div key={c.user_id} className={`flex items-center gap-4 rounded-lg border p-4 ${isArabic ? "flex-row-reverse text-right" : ""}`}
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                     {c.rank}
@@ -800,7 +817,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-primary">{Math.round(c.fit?.fit_score || 0)}</p>
-                    <p className="text-[10px] text-muted-foreground">Job Fit</p>
+                    <p className="text-[10px] text-muted-foreground">{t("hr.jobFit")}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-semibold">{Math.round(c.ers_score || 0)}</p>
@@ -817,7 +834,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                 </motion.div>
               ))}
               {(smartMatchResults || []).length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">No matching candidates found.</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t("hr.noMatchingCandidates")}</p>
               )}
             </div>
           )}
