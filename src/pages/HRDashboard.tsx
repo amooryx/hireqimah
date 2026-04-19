@@ -268,30 +268,71 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
 
   const sendInterviewRequest = async () => {
     if (!interviewDialog) return;
-    await untypedTable("interview_requests").insert({
+
+    // Validate scheduled_at if provided
+    let scheduledIso: string | null = null;
+    if (interviewScheduledAt) {
+      const d = new Date(interviewScheduledAt);
+      if (isNaN(d.getTime())) { toast({ title: t("interview.dateTimeRequired"), variant: "destructive" }); return; }
+      scheduledIso = d.toISOString();
+    }
+
+    // Validate URL if provided
+    if (interviewMeetingUrl) {
+      try {
+        const u = new URL(interviewMeetingUrl);
+        if (!["http:", "https:"].includes(u.protocol)) throw new Error("invalid");
+      } catch {
+        toast({ title: t("interview.invalidUrl"), variant: "destructive" });
+        return;
+      }
+    }
+
+    const payload: any = {
       hr_user_id: authUser.id,
       student_user_id: interviewDialog.user_id,
       job_title: interviewTitle || t("hr.requestInterview"),
       job_description: interviewDesc || null,
-      status: "requested",
-    });
+      meeting_url: interviewMeetingUrl || null,
+      meeting_provider: interviewMeetingUrl ? interviewProvider : null,
+      scheduled_at: scheduledIso,
+      status: scheduledIso && interviewMeetingUrl ? "scheduled" : "requested",
+    };
+
+    let id = interviewExistingId;
+    if (id) {
+      await untypedTable("interview_requests").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", id);
+    } else {
+      const { data: inserted } = await untypedTable("interview_requests").insert(payload).select("id").single();
+      id = (inserted as any)?.id || null;
+    }
+
+    const whenLabel = scheduledIso
+      ? new Date(scheduledIso).toLocaleString(isArabic ? "ar-SA" : "en-US", { dateStyle: "medium", timeStyle: "short" })
+      : t("interview.notScheduled");
+
     await untypedTable("notifications").insert({
       user_id: interviewDialog.user_id,
-      type: "interview_request",
-      title: t("hr.newInterviewRequest"),
-      body: `${hrProfile?.company_name || t("hr.companies")} ${isArabic ? `تريد مقابلتك لوظيفة "${interviewTitle || ""}"` : `wants to interview you for "${interviewTitle || "a position"}".`}`,
+      type: scheduledIso ? "interview_scheduled" : "interview_request",
+      title: scheduledIso ? t("interview.notifyTitle") : t("hr.newInterviewRequest"),
+      body: t("interview.notifyBody", {
+        company: hrProfile?.company_name || t("hr.companies"),
+        title: interviewTitle || "",
+        when: whenLabel,
+      }),
     });
     await supabase.from("audit_logs").insert({
       user_id: authUser.id,
-      action: "interview_requested",
+      action: scheduledIso ? "interview_scheduled" : "interview_requested",
       resource_type: "student",
       resource_id: interviewDialog.user_id,
-      details: { student_name: interviewDialog.profiles?.full_name, job_title: interviewTitle },
+      details: { student_name: interviewDialog.profiles?.full_name, job_title: interviewTitle, scheduled_at: scheduledIso, meeting_provider: interviewProvider },
     });
-    toast({ title: t("hr.interviewSent") });
-    setInterviewDialog(null);
-    setInterviewTitle("");
-    setInterviewDesc("");
+    toast({
+      title: scheduledIso ? t("interview.inviteSent") : t("hr.interviewSent"),
+      description: t("interview.studentNotified", { name: interviewDialog.profiles?.full_name || "" }),
+    });
+    closeInterviewDialog();
     loadDashboard();
   };
 
