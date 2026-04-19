@@ -296,8 +296,8 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
 
   const handleInterviewResponse = async (id: string, response: "accepted" | "declined") => {
     await untypedTable("interview_requests").update({ status: response, student_response: response, updated_at: new Date().toISOString() }).eq("id", id);
-    toast({ title: response === "accepted" ? t("dash.interviewAccepted") : t("dash.interviewDeclined") });
-    loadDashboard();
+    setInterviews(prev => prev.map(iv => iv.id === id ? { ...iv, status: response, student_response: response } : iv));
+    toast({ title: response === "accepted" ? t("interview.responseAccepted") : t("interview.responseDeclined") });
   };
 
   const markNotificationsRead = async () => {
@@ -311,6 +311,7 @@ const StudentDashboard = ({ user: authUser }: StudentDashboardProps) => {
   const statusLabel = (status: string) => {
     const map: Record<string, string> = {
       requested: t("dash.statusRequested"),
+      scheduled: t("interview.scheduledFor"),
       accepted: t("dash.statusAccepted"),
       declined: t("dash.statusDeclined"),
       applied: t("dash.statusApplied"),
