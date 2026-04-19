@@ -292,7 +292,11 @@ export type Database = {
           hr_user_id: string
           id: string
           job_description: string | null
+          job_posting_id: string | null
           job_title: string | null
+          meeting_provider: string | null
+          meeting_url: string | null
+          scheduled_at: string | null
           status: string
           student_response: string | null
           student_user_id: string
@@ -303,7 +307,11 @@ export type Database = {
           hr_user_id: string
           id?: string
           job_description?: string | null
+          job_posting_id?: string | null
           job_title?: string | null
+          meeting_provider?: string | null
+          meeting_url?: string | null
+          scheduled_at?: string | null
           status?: string
           student_response?: string | null
           student_user_id: string
@@ -314,7 +322,11 @@ export type Database = {
           hr_user_id?: string
           id?: string
           job_description?: string | null
+          job_posting_id?: string | null
           job_title?: string | null
+          meeting_provider?: string | null
+          meeting_url?: string | null
+          scheduled_at?: string | null
           status?: string
           student_response?: string | null
           student_user_id?: string
