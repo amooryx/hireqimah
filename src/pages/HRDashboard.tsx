@@ -93,10 +93,14 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
   const [viewingProfile, setViewingProfile] = useState<any>(null);
   const [interviewDialog, setInterviewDialog] = useState<any>(null);
   const [interviewTitle, setInterviewTitle] = useState("");
+  const [interviewDesc, setInterviewDesc] = useState("");
+  const [interviewScheduledAt, setInterviewScheduledAt] = useState("");
+  const [interviewProvider, setInterviewProvider] = useState<string>("Google Meet");
+  const [interviewMeetingUrl, setInterviewMeetingUrl] = useState("");
+  const [interviewExistingId, setInterviewExistingId] = useState<string | null>(null);
   const [jobPostings, setJobPostings] = useState<any[]>([]);
   const [showJobForm, setShowJobForm] = useState(false);
   const [jobForm, setJobForm] = useState({ title: "", description: "", location: "Saudi Arabia", sector: "", required_skills: "", min_ers_score: "" });
-  const [interviewDesc, setInterviewDesc] = useState("");
   const [messageDialog, setMessageDialog] = useState<any>(null);
   const [messageText, setMessageText] = useState("");
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -104,6 +108,40 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
   const [smartMatchResults, setSmartMatchResults] = useState<any[] | null>(null);
   const [smartMatchLoading, setSmartMatchLoading] = useState(false);
   const [smartMatchJob, setSmartMatchJob] = useState<any>(null);
+
+  const openInterviewDialog = (student: any, existing?: any) => {
+    setInterviewDialog(student);
+    setInterviewTitle(existing?.job_title || "");
+    setInterviewDesc(existing?.job_description || "");
+    setInterviewProvider(existing?.meeting_provider || "Google Meet");
+    setInterviewMeetingUrl(existing?.meeting_url || "");
+    setInterviewExistingId(existing?.id || null);
+    if (existing?.scheduled_at) {
+      const d = new Date(existing.scheduled_at);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setInterviewScheduledAt(
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+      );
+    } else {
+      setInterviewScheduledAt("");
+    }
+  };
+
+  const closeInterviewDialog = () => {
+    setInterviewDialog(null);
+    setInterviewTitle("");
+    setInterviewDesc("");
+    setInterviewScheduledAt("");
+    setInterviewProvider("Google Meet");
+    setInterviewMeetingUrl("");
+    setInterviewExistingId(null);
+  };
+
+  const generateMeetLink = () => {
+    const seg = (n: number) => Array.from({ length: n }, () => "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)]).join("");
+    setInterviewMeetingUrl(`https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`);
+    setInterviewProvider("Google Meet");
+  };
 
   const stageLabel = (stage: string) => {
     const map: Record<string, string> = {
