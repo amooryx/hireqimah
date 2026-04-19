@@ -17,7 +17,8 @@ import { useI18n } from "@/lib/i18n";
 import { SAUDI_UNIVERSITIES } from "@/lib/leaderboardConstants";
 import {
   Search, Users, BarChart3, Star, Award, Eye, TrendingUp, Briefcase,
-  CheckCircle, X, ShieldCheck, MessageSquare, Calendar, Bell, Send, Target, Zap
+  CheckCircle, X, ShieldCheck, MessageSquare, Calendar, Bell, Send, Target, Zap,
+  Link as LinkIcon, Video
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
