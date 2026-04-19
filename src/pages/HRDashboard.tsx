@@ -157,6 +157,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
   const statusLabel = (status: string) => {
     const map: Record<string, string> = {
       requested: t("dash.statusRequested"),
+      scheduled: t("interview.scheduledFor"),
       accepted: t("dash.statusAccepted"),
       declined: t("dash.statusDeclined"),
     };
@@ -504,7 +505,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                       <Button size="sm" variant="outline" onClick={() => setViewingProfile(s)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setInterviewDialog(s)}>
+                      <Button size="sm" variant="outline" onClick={() => openInterviewDialog(s)}>
                         <Calendar className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => setMessageDialog(s)}>
@@ -595,7 +596,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                         <p className="text-xs text-muted-foreground">{student.university} · {student.major}</p>
                       </div>
                       <p className="font-bold text-primary">{Math.round(student.ers_score || 0)} ERS</p>
-                      <Button size="sm" variant="outline" onClick={() => setInterviewDialog(student)}><Calendar className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="outline" onClick={() => openInterviewDialog(student)}><Calendar className="h-4 w-4" /></Button>
                       <Button size="sm" variant="outline" onClick={() => setMessageDialog(student)}><MessageSquare className="h-4 w-4" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => handleShortlist(sl.student_user_id)}><X className="h-4 w-4" /></Button>
                     </motion.div>
@@ -815,7 +816,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                 ))}
               </div>
               <div className="flex gap-2">
-                <Button className="flex-1" onClick={() => { setViewingProfile(null); setInterviewDialog(viewingProfile); }}>
+                <Button className="flex-1" onClick={() => { const s = viewingProfile; setViewingProfile(null); openInterviewDialog(s); }}>
                   <Calendar className="h-4 w-4 ltr:mr-1 rtl:ml-1" />{t("hr.requestInterview")}
                 </Button>
                 <Button variant="outline" className="flex-1" onClick={() => { setViewingProfile(null); setMessageDialog(viewingProfile); }}>
@@ -906,7 +907,7 @@ const HRDashboard = ({ user: authUser }: HRDashboardProps) => {
                     <Button size="sm" variant="outline" onClick={() => { setSmartMatchResults(null); addToPipeline(c.user_id, smartMatchJob?.title); }}>
                       <Target className="h-3 w-3" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setSmartMatchResults(null); setInterviewDialog({ user_id: c.user_id, profiles: { full_name: c.full_name } }); }}>
+                    <Button size="sm" variant="outline" onClick={() => { setSmartMatchResults(null); openInterviewDialog({ user_id: c.user_id, profiles: { full_name: c.full_name } }); }}>
                       <Calendar className="h-3 w-3" />
                     </Button>
                   </div>
