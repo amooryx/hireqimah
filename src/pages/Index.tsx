@@ -5,12 +5,14 @@ import {
   GraduationCap, Building2, University, BarChart3,
   ArrowRight, Trophy, TrendingUp, Globe, Shield,
   FileCheck, Compass, Award, Target, Users, BookOpen,
-  ChevronRight,
+  ChevronRight, LayoutDashboard,
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import logo from "@/assets/hireqimah-logo.png";
 import { useI18n } from "@/lib/i18n";
 import Footer from "@/components/Footer";
+import { useImpersonation } from "@/lib/impersonation";
+import { getDashboardPath } from "@/lib/supabaseAuth";
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -21,7 +23,8 @@ const fadeUp = {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
+  const { effectiveUser } = useImpersonation();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
