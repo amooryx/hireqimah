@@ -60,7 +60,7 @@ interface AppRoutesProps {
 // Inner routes — uses impersonation context for effective role
 const AppRoutes = ({ realUser, onLogout, onLogin }: AppRoutesProps) => {
   const location = useLocation();
-  const { effectiveUser, isImpersonating } = useImpersonation();
+  const { effectiveUser } = useImpersonation();
   const role = effectiveUser?.role ?? null;
 
   // Public-style routes where the dashboard navbar should NOT appear
