@@ -117,8 +117,6 @@ const AppRoutes = ({ realUser, onLogout, onLogin }: AppRoutesProps) => {
         <Route path="/access-denied" element={<AccessDenied />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {/* suppress unused var lint */}
-      <span hidden>{isImpersonating ? "" : ""}</span>
     </>
   );
 };
