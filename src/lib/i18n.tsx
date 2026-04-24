@@ -900,10 +900,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "common.viewAll": { en: "View All", ar: "عرض الكل" },
   "common.notAvailable": { en: "Not available", ar: "غير متاح" },
 
-  // ─── Roles (used in impersonation banner) ───
-  "role.student": { en: "Student", ar: "طالب" },
-  "role.hr": { en: "Employer", ar: "جهة توظيف" },
-  "role.university": { en: "University", ar: "جامعة" },
+  // ─── Roles (admin label, used in impersonation banner) ───
   "role.admin": { en: "Admin", ar: "مشرف" },
 
   // ─── Impersonation ───
